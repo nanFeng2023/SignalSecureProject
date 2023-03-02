@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawerLayout_main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/cl_main"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="30dp">
+
+            <ImageView
+                android:id="@+id/iv_set_main"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="16dp"
+                android:src="@mipmap/ic_set_main"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/iv_country_bg_main"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="20dp"
+                android:src="@mipmap/ic_country_bg_main"
+                app:layout_constraintBottom_toBottomOf="@+id/iv_set_main"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/iv_set_main" />
+
+            <ImageView
+                android:id="@+id/iv_country_main"
+                android:layout_width="21dp"
+                android:layout_height="21dp"
+                android:src="@mipmap/ic_default_country"
+                app:layout_constraintBottom_toBottomOf="@+id/iv_country_bg_main"
+                app:layout_constraintEnd_toEndOf="@+id/iv_country_bg_main"
+                app:layout_constraintStart_toStartOf="@+id/iv_country_bg_main"
+                app:layout_constraintTop_toTopOf="@id/iv_country_bg_main" />
+
+            <ImageView
+                android:id="@+id/iv_connection_time_main"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:scaleType="centerCrop"
+                android:src="@mipmap/ic_connection_time_main"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/iv_set_main" />
+
+            <TextView
+                android:id="@+id/tv_connect_time_main"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textColor="@color/connect_time_color_main"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/iv_connection_time_main" />
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/lav_main"
+                android:layout_width="235dp"
+                android:layout_height="228dp"
+                android:layout_marginTop="36dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_connect_time_main"
+                app:lottie_fileName="lottie/connect/images/connect_animation.json"
+                app:lottie_imageAssetsFolder="lottie/connect/images"
+                app:lottie_loop="true"
+                app:lottie_progress="0" />
+
+            <ImageView
+                android:id="@+id/iv_connect_progress_state_main"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="47dp"
+                android:scaleType="centerInside"
+                android:src="@mipmap/ic_connect_off_progress_main"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/lav_main" />
+
+            <ImageView
+                android:id="@+id/iv_ad_main"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:scaleType="centerInside"
+                android:visibility="gone"
+                android:src="@mipmap/ic_ad_main"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/iv_connect_progress_state_main" />
+
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/nav_main"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            app:headerLayout="@layout/layout_nav_header"
+            app:menu="@menu/nav_menu"/>
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+    <com.testbird.signalsecurevpn.widget.MaskView
+        android:id="@+id/mask_view_main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!--引导动画-->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lav_guide_main"
+        android:layout_width="235dp"
+        android:layout_height="228dp"
+        android:layout_marginTop="224dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:lottie_fileName="lottie/guide/images/guide_animation.json"
+        app:lottie_imageAssetsFolder="lottie/guide/images"
+        app:lottie_loop="true" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

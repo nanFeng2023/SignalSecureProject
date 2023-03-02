@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application
+        android:name=".App"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:sharedUserId="android.uid.system"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Design.Light.NoActionBar"
+        android:usesCleartextTraffic="true"
+        tools:ignore="LockedOrientationActivity"
+        tools:replace="android:fullBackupContent,android:theme"
+        tools:targetApi="31">
+        <!--android:sharedUserId="android.uid.system"   解决java.lang.SecurityException: Package android does not belong to 10253报错-->
+        <activity
+            android:name=".PrivacyPolicyActivity"
+            android:exported="false" />
+        <!-- facebook配置 -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
+        <activity
+            android:name=".VpnConnectResultActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".VpnSelectActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".LaunchActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait" />
+    </application>
+
+</manifest>
