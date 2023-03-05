@@ -1,0 +1,12 @@
+{
+  "sigvns": 50,
+  "sigvnc": 15,
+  "sigvn_on": [
+    {
+      "sigvn_id": "",
+      "sigvn_s": "admob",
+      "sigvn_t": "open",
+      "sigvn_p": 3
+    }
+  ]
+}

@@ -6,27 +6,22 @@ import android.util.Log
 import android.view.KeyEvent
 import android.widget.ProgressBar
 import androidx.lifecycle.lifecycleScope
-import com.lzy.okgo.OkGo
-import com.lzy.okgo.cache.CacheMode
-import com.lzy.okgo.callback.StringCallback
-import com.lzy.okgo.model.Response
+import com.testbird.signalsecurevpn.util.AdConfigurationUtil
 import com.testbird.signalsecurevpn.util.NetworkUtil
 import com.testbird.signalsecurevpn.util.ProjectUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.json.JSONException
-import org.json.JSONObject
-import javax.security.auth.login.LoginException
+import timber.log.Timber
 
 /*
 * 启动页面
 */
-class LaunchActivity : BaseActivity() {
+class LaunchActivity : BaseActivity(), AdManager.OnAdStateListener {
     private lateinit var progressBar: ProgressBar
     private var canBack = true
-    private var isRestrictCountry = false
+    private var delayIntervalTime = 100L;//延时间隔时间  默认10s
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -35,21 +30,25 @@ class LaunchActivity : BaseActivity() {
     }
 
     override fun businessProcess() {
-        Log.i("main", "LaunchActivity---onCreate")
+        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----businessProcess()")
         countDown(100, start = {
             canBack = false
-//            detectionIp()//限制IP判断
+            //限制IP判断
+            NetworkUtil.detectionIp(null)
+            //注册广告回调监听
+            AdManager.onAdStateListener = this
+            //请求广告
+            AdManager.loadOpenAd()
         }, next = {
+            //更新进度条
             progressBar.progress = it
         }, end = {
-            val isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
             canBack = true
-            if (isHotLaunch) {//热启动关闭闪屏页，恢复到之前页面
-                finish()
-                return@countDown
-            }
-            jumpActivity()
+            Timber.tag(AdConfigurationUtil.LOG_TAG)
+                .d("LaunchActivity----动画加载完成,即将加载广告")
+            AdManager.showOpenAd(this@LaunchActivity)
         })
+
     }
 
     override fun bindViewId() {
@@ -61,30 +60,12 @@ class LaunchActivity : BaseActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {//屏蔽返回键
-            return canBack
+        if (keyCode == KeyEvent.KEYCODE_BACK && canBack) {//屏蔽返回键
+            return super.onKeyDown(keyCode, event)
         }
-        return super.onKeyDown(keyCode, event)
+        return true
     }
 
-    /*检测IP*/
-    private fun detectionIp() {
-        OkGo.get<String>(NetworkUtil.BASE_URL)
-            .tag(this)
-            .cacheMode(CacheMode.NO_CACHE)
-            .execute(object : StringCallback() {
-                override fun onSuccess(response: Response<String>?) {
-//                    response?.let { Log.i("TAG:onSuccess", it.body()) }
-                    Log.i("TAG", "success")
-                    response?.let { parseData(it.body()) }
-                }
-
-                override fun onError(response: Response<String>?) {
-                    super.onError(response)
-                    Log.i("TAG", "error")
-                }
-            })
-    }
 
     //协程
     private fun AppCompatActivity.countDown(
@@ -96,7 +77,7 @@ class LaunchActivity : BaseActivity() {
         lifecycleScope.launch {
             flow {
                 (time downTo 0).forEach {
-                    delay(20)
+                    delay(delayIntervalTime)
                     emit(it)
                 }
             }.onStart {
@@ -116,21 +97,37 @@ class LaunchActivity : BaseActivity() {
     }
 
     private fun jumpActivity() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("isRestrictCountry", isRestrictCountry)
-        startActivity(intent)
-        finish()
+        val isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
+        if (isHotLaunch) {//热启动关闭闪屏页，恢复到之前页面
+            finish()
+            Timber.tag(AdConfigurationUtil.LOG_TAG)
+                .d("LaunchActivity----jumpActivity()--关闭页面显示之前页面")
+        } else {
+            Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----jumpActivity()--跳转到主页")
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
     }
 
-    private fun parseData(data: String) {
-        var jsonObj: JSONObject? = null
-        try {
-            jsonObj = JSONObject(data)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-        val country = jsonObj?.opt("country")
-        Log.i("TAG", "country:$country")
-        isRestrictCountry = "HK" == country
+    override fun onAdLoaded() {
+        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoaded()")
+        delayIntervalTime = 10L
+    }
+
+    override fun onAdLoadFail() {
+        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoadFail()")
+        jumpActivity()
+    }
+
+    override fun onShowAdComplete() {
+        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----onShowAdComplete()")
+        jumpActivity()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        //取消广告回调监听
+        AdManager.onAdStateListener = null
     }
 }

@@ -7,11 +7,10 @@ import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.multidex.MultiDexApplication
 import androidx.work.Configuration.Provider
 import com.github.shadowsocks.Core
-import com.google.firebase.FirebaseApp
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.ktx.initialize
+import com.google.android.gms.ads.MobileAds
 import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheEntity
 import com.lzy.okgo.cache.CacheMode
@@ -19,9 +18,10 @@ import com.lzy.okgo.model.HttpHeaders
 import com.lzy.okgo.model.HttpParams
 import com.testbird.signalsecurevpn.util.NetworkUtil
 import okhttp3.OkHttpClient
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
-class App : Application(), Provider by Core {
+class App : MultiDexApplication(), Provider by Core {
     companion object {
         lateinit var appContext: Application
         var isColdLaunch: Boolean = true//第一次或杀掉进程再进都是冷启动
@@ -48,6 +48,12 @@ class App : Application(), Provider by Core {
             //请求服务器列表  预加载数据
             NetworkUtil.obtainServiceData()
             Core.stopService()//杀掉主进程重启关闭VPN
+            //广告注册
+            MobileAds.initialize(this) {}
+            //日志开关
+            if (BuildConfig.DEBUG) {
+//                Timber.plant(Timber.DebugTree())
+            }
         }
     }
 
@@ -73,7 +79,6 @@ class App : Application(), Provider by Core {
         super.onConfigurationChanged(newConfig)
         Core.updateNotificationChannels()
     }
-
 
     private fun initReadyOkGo() {
         val headers = HttpHeaders()
