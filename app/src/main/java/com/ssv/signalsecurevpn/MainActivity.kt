@@ -4,7 +4,6 @@ import android.animation.Animator
 import android.content.Intent
 import android.os.Bundle
 import android.os.RemoteException
-import android.util.Log
 import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
@@ -43,9 +42,7 @@ import com.ssv.signalsecurevpn.util.*
 import com.ssv.signalsecurevpn.widget.AlertDialogUtil
 import com.ssv.signalsecurevpn.widget.MaskView
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -110,10 +107,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         }
         if (ProjectUtil.idle) {
             TimeUtil.resetTime()
-            Log.i(
-                "TAG",
-                "businessProcess()------TimeUtil.curConnectTime:${TimeUtil.curConnectTime}"
-            )
             tvConnectTime.text = TimeUtil.curConnectTime
         }
         timeDataCallBack = object : TimeDataCallBack {
@@ -122,10 +115,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             }
 
             override fun onResetTime() {
-                Log.i(
-                    "TAG",
-                    "onResetTime()------TimeUtil.curConnectTime:${TimeUtil.curConnectTime}"
-                )
                 tvConnectTime.text = TimeUtil.curConnectTime
             }
 
@@ -135,17 +124,14 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         //Lottie动画设置
         lav.addAnimatorListener(object : Animator.AnimatorListener {
             override fun onAnimationStart(p0: Animator) {
-                Log.i("TAG-MAIN", "onAnimationStart")
                 connectOrStopAnimateStart()
             }
 
             override fun onAnimationEnd(p0: Animator) {
-                Log.i("TAG-MAIN", "onAnimationEnd")
                 connectOrStopAnimationEnd()
             }
 
             override fun onAnimationCancel(p0: Animator) {
-                Log.i("TAG-MAIN", "onAnimationCancel")
 
             }
 
@@ -185,7 +171,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                 }
 
                 override fun onAppToBackGround() {//比如home键,关闭动画取消,关闭VPN连接
-                    Log.i("TAG", "onAppToBackGround()")
                     stopVpnConnectingAnimation()
                     stopVpnStoppingAnimation()
                     ProjectUtil.appToFront = false
@@ -336,13 +321,13 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         return R.layout.activity_main
     }
 
-    fun snackBar(text: CharSequence = "") =
+    private fun snackBar(text: CharSequence = "") =
         Snackbar.make(lav, text, Snackbar.LENGTH_SHORT).apply {
             anchorView = lav
         }
 
     override fun stateChanged(state: BaseService.State, profileName: String?, msg: String?) {
-        Log.i("TAG", "stateChanged: state:$state-----profileName:$profileName-----msg:$msg")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----stateChanged()---state:${state}")
         changeVpnState(state)
         judgeVpnConnectState()
     }
@@ -376,7 +361,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         }
     }
 
-    private fun changeVpnState(state: BaseService.State, msg: String? = null) {
+    private fun changeVpnState(state: BaseService.State) {
         this.vpnState = state
         //状态切换
         when (vpnState) {
@@ -406,7 +391,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
 
     override fun onServiceConnected(service: IShadowsocksService) = changeVpnState(
         try {
-            Log.i("TAG", "onServiceConnected:${service.state}")
+            Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----onServiceConnected()---state:${service.state}")
             BaseService.State.values()[service.state]
         } catch (_: RemoteException) {
             BaseService.State.Idle
@@ -414,7 +399,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
     )
 
     override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
-        Log.i("TAG", "onPreferenceDataStoreChanged()")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----onPreferenceDataStoreChanged()")
         when (key) {
             Key.serviceMode -> {
                 shadowSocksConnection.disconnect(this)
@@ -424,14 +409,14 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
     }
 
     override fun onServiceDisconnected() {
-        Log.i("TAG", "onServiceDisconnected():state:Idle")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----onServiceDisconnected()")
         changeVpnState(BaseService.State.Idle)
         //连接失败
         reqVpnConnectFail()
     }
 
     override fun onBinderDied() {
-        Log.i("TAG", "onBinderDied()")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----onBinderDied()")
         shadowSocksConnection.disconnect(this)
         shadowSocksConnection.connect(this, this)
     }
@@ -467,9 +452,8 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
 
     /*停止VPN连接动画*/
     private fun stopVpnConnectingAnimation() {
-        Log.i("TAG", "stopVpnConnectingAnimation--ProjectUtil.connecting:${ProjectUtil.connecting}")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----stopVpnConnectingAnimation()")
         if (ProjectUtil.connecting) {//ProjectUtil.connecting后续在动画结束回调里面去重置
-            Log.i("TAG", "stopVpnConnectingAnimation--停止")
             lav.cancelAnimation()
             connectionJob?.cancel()
             //取消连接后重置状态
@@ -479,13 +463,13 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
 
     /*停止VPN关闭动画*/
     private fun stopVpnStoppingAnimation() {
-        Log.i("TAG", "stopVpnStoppingAnimation--ProjectUtil.stopping:${ProjectUtil.stopping}")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----stopVpnStoppingAnimation()")
         if (ProjectUtil.stopping) {
-            Log.i("TAG", "stopVpnStoppingAnimation--停止")
             ProjectUtil.stopping = false
             lav.cancelAnimation()
             //取消连接后重置状态
             connectStateChange()
+            connectionJob?.cancel()
         }
     }
 
@@ -527,7 +511,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                         //动画播放,开始连接VPN
                         connectionJob = lifecycleScope.launch {
                             flow {
-                                (0 until 10).forEach() {
+                                (0 until 10).forEach {
                                     delay(1000)
                                     emit(it)
                                 }
@@ -565,22 +549,12 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             return
         if (ProjectUtil.stopping)//如果正在停止，再次点击不生效
             return
-        Log.i("TAG", "stopConnect----vpnState:$vpnState")
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("MainActivity----stopConnect()---vpnState:$vpnState")
         if (vpnState.canStop) {//如果VPN连接上才走停止流程
-            Log.i("TAG", "stopConnect----停止连接")
-            lav.repeatMode = LottieDrawable.REVERSE
-//            lav.playAnimation()
-//
-//            //动画播放5秒后才开始关闭VPN 模拟真实请求接口数据
-//            lav.postDelayed({
-//                if (ProjectUtil.stopping) {//动画停止中，点击其他按钮后，终止VPN停止过程
-//                    Core.stopService()//停止VPN
-//                }
-//            }, 5000)
-
             connectionJob = lifecycleScope.launch {
                 flow {
-                    (0 until 10).forEach() {
+                    (0 until 10).forEach {
                         delay(1000)
                         emit(it)
                     }
@@ -592,7 +566,9 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                 }.onCompletion {
                     Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("MainActivity----stopConnect()---开始关闭VPN")
-                    Core.stopService()
+                    if (ProjectUtil.stopping) {//动画停止中，点击其他按钮后，终止VPN停止过程
+                        Core.stopService()//停止VPN
+                    }
                 }.collect {
                     val adAvailable =
                         AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) ?: false
@@ -705,7 +681,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
 
     //测速
     private fun selectSmartService() {
-        Log.i("TAG", "selectSmartService（）:开始测速")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----selectSmartService()---开始测速")
         smartCityList = ArrayList()
         ipTestList = ArrayList()
         smartCitySpeedList = ArrayList()
@@ -718,7 +694,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                 }
             }
         }
-        var count = 0
+        val count = 0
         //ip测速
         for (i in 0 until smartCityList.size) {
             val vpnBean = smartCityList[i]
@@ -726,10 +702,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             ip?.let {
                 lifecycleScope.launch {
                     val ipDelay = NetworkUtil.delayTest(it, 2000)
-                    Log.i(
-                        "TAG",
-                        "ip:$ip----测速：$ipDelay---count:$count---size:${smartCityList.size}---1111"
-                    )
                     ipTestCallBack.invoke(ip, ipDelay, count, smartCityList.size)
                 }
             }
@@ -739,10 +711,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             bean.ip = ip
             bean.ipDelayTime = delayTime
             ipTestList.add(bean)
-            Log.i(
-                "TAG",
-                "ip:$ip----测速：$delayTime---count:$countNum---size:${smartCityList.size}---2222"
-            )
             if (countNum == listSize) {//测速完成
                 sortIpDelay()
             }
@@ -770,9 +738,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                 ipTestList[minIndex] = temp
             }
             // 执行完一次循环，当前索引 i 处的值为最小值，直到循环结束即可完成排序
-        }
-        for (i in ipTestList.indices) {
-            Log.e("TAG", "i：" + ipTestList[i])
         }
     }
 }
