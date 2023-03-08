@@ -3,11 +3,13 @@ package com.ssv.signalsecurevpn.util
 import android.content.Context
 import android.net.ConnectivityManager
 import android.telephony.TelephonyManager
+import android.text.TextUtils
 import android.util.Log
 import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.callback.StringCallback
 import com.lzy.okgo.model.Response
+import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.App
 import com.ssv.signalsecurevpn.bean.AdBean
 import com.ssv.signalsecurevpn.bean.AdDataResult
@@ -15,6 +17,7 @@ import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.call.BusinessProcessCallBack
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import timber.log.Timber
@@ -193,23 +196,43 @@ object NetworkUtil {
 
     fun obtainAdData() {
         //1.先服务器接口
-
-        //2.没有1才本地
-        val obtainNativeJsonData = obtainNativeJsonData("ad.json")
-        adDataResult = parseAdData(obtainNativeJsonData.toString())
+//        FirebaseUtils.loadConfigure()
+        val adData : String? = SharePreferenceUtil.getString(AdMob.SIGVN_AD)
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("NetworkUtil----obtainAdData()---远端广告数据:$adData")
+        adDataResult = if (!TextUtils.isEmpty(adData)){
+            adData?.let { parseAdData(it) }
+        }else{
+            //2.没有1才本地
+            val obtainNativeJsonData = obtainNativeJsonData("ad.json")
+            parseAdData(obtainNativeJsonData.toString())
+        }
     }
 
     private fun parseAdData(data: String): AdDataResult {
-        Timber.tag(AdConfigurationUtil.LOG_TAG).d("NetworkUtil----parseAdData()---data:$data")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("NetworkUtil----parseAdData()---data:$data")
         val jsonObject = JSONObject(data)
         val adDataResult = AdDataResult()
         val ssv_show_upper_limit = jsonObject.optInt("sigvns")
         adDataResult.ssv_show_upper_limit = ssv_show_upper_limit
         val ssv_click_upper_limit = jsonObject.optInt("sigvnc")
         adDataResult.ssv_click_upper_limit = ssv_click_upper_limit
-        val optJSONArray = jsonObject.optJSONArray("sigvn_on")
+        val ad_open_on = parseAdData(jsonObject.optJSONArray("sigvn_on") as JSONArray)
+        adDataResult.ssv_ad_open_on = ad_open_on
+        val ad_native_home = jsonObject.optJSONArray("sigvn_nhome")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_native_home = ad_native_home
+        val ad_native_result = jsonObject.optJSONArray("sigvn_nresult")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_native_result = ad_native_result
+        val ad_inter_click = jsonObject.optJSONArray("sigvn_click")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_inter_click = ad_inter_click
+        val ad_inter_ib = jsonObject.optJSONArray("sigvn_ib")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_inter_ib = ad_inter_ib
+        return adDataResult
+    }
+
+    private fun parseAdData(optJSONArray: JSONArray) :ArrayList<AdBean>{
         val adBeanList: ArrayList<AdBean> = ArrayList()
-        for (i in 0 until (optJSONArray?.length()!!)) {
+        for (i in 0 until (optJSONArray.length())) {
             val obj = optJSONArray.optJSONObject(i)
             val sigvn_id = obj.optString("sigvn_id")
             val sigvn_s = obj.optString("sigvn_s")
@@ -222,8 +245,7 @@ object NetworkUtil {
             adBean.ssv_priority = sigvn_p
             adBeanList.add(adBean)
         }
-        adDataResult.ssv_ad_space = adBeanList
-        return adDataResult
+        return adBeanList
     }
 
     /*检测IP为主，地区限制为辅*/
@@ -234,7 +256,7 @@ object NetworkUtil {
             .cacheMode(CacheMode.NO_CACHE)
             .execute(object : StringCallback() {
                 override fun onSuccess(response: Response<String>?) {
-                    Timber.tag(AdConfigurationUtil.LOG_TAG)
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("NetworkUtil----detectionIp()---onSuccess()")
                     response?.let {
                         try {
@@ -249,7 +271,7 @@ object NetworkUtil {
 
                 override fun onError(response: Response<String>?) {
                     super.onError(response)
-                    Timber.tag(AdConfigurationUtil.LOG_TAG)
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("NetworkUtil----detectionIp()---onError()---error:$response")
                     val country = Locale.getDefault().country
                     restrictArea(country,businessProcessCallBack)
@@ -258,7 +280,7 @@ object NetworkUtil {
     }
 
     private fun restrictArea(country: String, businessProcessCallBack: BusinessProcessCallBack?) {
-        Timber.tag(AdConfigurationUtil.LOG_TAG).d("NetworkUtil----restrictArea()---当前国家:$country")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("NetworkUtil----restrictArea()---当前国家:$country")
         isRestrictArea =
             (COUNTRY_HK == country/*|| COUNTRY_CN == country*/ || COUNTRY_MACAU == country || COUNTRY_IRAN == country)
         if (isRestrictArea) {

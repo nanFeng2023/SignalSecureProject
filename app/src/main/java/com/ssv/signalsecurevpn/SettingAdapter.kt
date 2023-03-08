@@ -10,6 +10,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.util.SharePreferenceUtil
 
 /*
 * vpn选择页面适配器
@@ -18,7 +19,7 @@ class SettingAdapter(private val dataList: List<VpnBean>) :
     RecyclerView.Adapter<SettingAdapter.SettingViewHolder>() {
 
     lateinit var onItemViewClick: (v: View, pos: Int) -> Unit
-    private val curSelectName = SharePreferenceUtil.getShareString(ProjectUtil.CUR_SELECT_CITY)
+    private val curSelectName = SharePreferenceUtil.getString(ProjectUtil.CUR_SELECT_CITY)
 
     inner class SettingViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var ivCountry: ImageView = view.findViewById(R.id.iv_country_rv_item_setting)

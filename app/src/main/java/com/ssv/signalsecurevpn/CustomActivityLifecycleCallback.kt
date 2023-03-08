@@ -5,8 +5,9 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Intent
 import android.os.Bundle
 import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
-import com.ssv.signalsecurevpn.util.AdConfigurationUtil
+import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.util.SharePreferenceUtil
 import timber.log.Timber
 
 object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
@@ -21,14 +22,14 @@ object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
         finalCount++
         //如果finalCount==1,说明应用是后台到前台
         if (finalCount == 1) {
-            val saveTimeMillis = SharePreferenceUtil.getShareLong(ProjectUtil.SAVE_TIME_MILLIS)
+            val saveTimeMillis = SharePreferenceUtil.getLong(ProjectUtil.SAVE_TIME_MILLIS)
             val currentTimeMillis = System.currentTimeMillis()
             val timeMillis = currentTimeMillis - saveTimeMillis
-            Timber.tag(AdConfigurationUtil.LOG_TAG)
+            Timber.tag(ConfigurationUtil.LOG_TAG)
                 .d("ColdActivityLifecycleCallback----onActivityStarted()---activity:${activity.localClassName},timeMillis:$timeMillis")
             if (timeMillis > 3000 && !App.isColdLaunch && !ProjectUtil.isAppMainBack) {//超过3s并且是热启动,并且不是主页返回键再进来
                 // ，走热启动流程
-                Timber.tag(AdConfigurationUtil.LOG_TAG)
+                Timber.tag(ConfigurationUtil.LOG_TAG)
                     .d("ColdActivityLifecycleCallback----onActivityStarted()---热启动")
                 val intent = Intent(activity, LaunchActivity::class.java)
                 intent.putExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, true)
@@ -50,9 +51,9 @@ object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
         finalCount--
         //finalCount==0,说明应用前台到后台
         if (finalCount == 0) {
-            Timber.tag(AdConfigurationUtil.LOG_TAG).d("ColdActivityLifecycleCallback----onActivityStopped()---activity:${activity.localClassName}")
+            Timber.tag(ConfigurationUtil.LOG_TAG).d("ColdActivityLifecycleCallback----onActivityStopped()---activity:${activity.localClassName}")
             val currentTimeMillis = System.currentTimeMillis()
-            SharePreferenceUtil.putShareLong(ProjectUtil.SAVE_TIME_MILLIS, currentTimeMillis)
+            SharePreferenceUtil.putLong(ProjectUtil.SAVE_TIME_MILLIS, currentTimeMillis)
             frontAndBackgroundCallBack?.onAppToBackGround()
         }
     }

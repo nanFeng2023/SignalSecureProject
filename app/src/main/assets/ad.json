@@ -1,12 +1,52 @@
 {
-  "sigvns": 50,
-  "sigvnc": 15,
+  "sigvns": 40,
+  "sigvnc": 5,
   "sigvn_on": [
     {
-      "sigvn_id": "",
+      "sigvn_id": "ca-app-pub-3940256099942544/3419835294",
       "sigvn_s": "admob",
       "sigvn_t": "open",
       "sigvn_p": 3
+    },
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/3419835294",
+      "sigvn_s": "admob",
+      "sigvn_t": "open",
+      "sigvn_p": 2
+    },
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/3419835294",
+      "sigvn_s": "admob",
+      "sigvn_t": "open",
+      "sigvn_p": 1
+    }
+  ],
+  "sigvn_ib": [
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/3419835294",
+      "sigvn_s": "admob",
+      "sigvn_t": "inter",
+      "sigvn_p": 3
+    },
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/3419835294",
+      "sigvn_s": "admob",
+      "sigvn_t": "inter",
+      "sigvn_p": 2
+    }
+  ],
+  "sigvn_click": [
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/3419835294",
+      "sigvn_s": "admob",
+      "sigvn_t": "inter",
+      "sigvn_p": 3
+    },
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/3419835294",
+      "sigvn_s": "admob",
+      "sigvn_t": "inter",
+      "sigvn_p": 2
     }
   ]
 }

@@ -1,8 +1,9 @@
-package com.ssv.signalsecurevpn
+package com.ssv.signalsecurevpn.util
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import com.ssv.signalsecurevpn.App
 
 /*sp帮助类*/
 @SuppressLint("StaticFieldLeak")
@@ -16,7 +17,7 @@ object SharePreferenceUtil {
         return sp!!
     }
 
-    fun putShareString(key: String, value: String?) {
+    fun putString(key: String, value: String?) {
         if (!value.isNullOrBlank()) {
             val edit: SharedPreferences.Editor = getSp(context).edit()
             edit.putString(key, value)
@@ -24,7 +25,7 @@ object SharePreferenceUtil {
         }
     }
 
-    fun getShareString(key: String): String? {
+    fun getString(key: String): String? {
         if (key.isNotBlank()) {
             val sps: SharedPreferences = getSp(context)
             return sps.getString(key, null)
@@ -32,13 +33,13 @@ object SharePreferenceUtil {
         return null
     }
 
-    fun putShareLong(key: String, value: Long) {
+    fun putLong(key: String, value: Long) {
         val edit = getSp(context).edit()
         edit.putLong(key, value)
         edit.apply()
     }
 
-    fun getShareLong(key: String): Long {
+    fun getLong(key: String): Long {
         val sps = getSp(context)
         return sps.getLong(key, 0)
     }

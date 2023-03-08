@@ -59,6 +59,9 @@ object ProjectUtil {
     //是否VPN服务器列表页面请求关闭连接
     var isVpnSelectPageReqStopVpn = false
 
+    //是否是vpn选择页面返回
+    var isVpnSelectPageBack=false
+
     //国家icon资源选择
     fun selectCountryIcon(countryName: String): Int {
         val countryIconResourceId = when (countryName) {

@@ -2,11 +2,14 @@ package com.ssv.signalsecurevpn
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
-import android.util.Log
 import android.view.KeyEvent
 import android.widget.ProgressBar
 import androidx.lifecycle.lifecycleScope
-import com.ssv.signalsecurevpn.util.AdConfigurationUtil
+import com.ssv.signalsecurevpn.ad.AdLoadStateCallBack
+import com.ssv.signalsecurevpn.ad.AdManager
+import com.ssv.signalsecurevpn.ad.AdMob
+import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
+import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import kotlinx.coroutines.CoroutineScope
@@ -18,11 +21,11 @@ import timber.log.Timber
 /*
 * 启动页面
 */
-class LaunchActivity : BaseActivity(), AdManager.OnAdStateListener {
+class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
     private lateinit var progressBar: ProgressBar
     private var canBack = true
     private var delayIntervalTime = 100L;//延时间隔时间  默认10s
-
+    private var isHotLaunch = false
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         //设置singleTask后 需要重新设置新的intent数据才生效
@@ -30,25 +33,56 @@ class LaunchActivity : BaseActivity(), AdManager.OnAdStateListener {
     }
 
     override fun businessProcess() {
-        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----businessProcess()")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----businessProcess()")
         countDown(100, start = {
             canBack = false
             //限制IP判断
             NetworkUtil.detectionIp(null)
-            //注册广告回调监听
-            AdManager.onAdStateListener = this
-            //请求广告
-            AdManager.loadOpenAd()
+            isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
+            if (isHotLaunch) {//热启动
+                if (!AdManager.isAdAvailable(AdMob.AD_OPEN)!!) {//没有缓存或过期，重新请求
+                    reqAd()
+                }
+            } else {//冷启动
+                reqAd()
+            }
         }, next = {
             //更新进度条
             progressBar.progress = it
         }, end = {
             canBack = true
-            Timber.tag(AdConfigurationUtil.LOG_TAG)
-                .d("LaunchActivity----动画加载完成,即将加载广告")
-            AdManager.showOpenAd(this@LaunchActivity)
-        })
+            if (AdMob.isReqInterrupt) {//广告达到日上限或广告不是来自admob
+                jumpActivity()
+            } else {
+                Timber.tag(ConfigurationUtil.LOG_TAG)
+                    .d("LaunchActivity----动画加载完成,即将加载广告")
+                AdManager.showAd(this@LaunchActivity, AdMob.AD_OPEN, object : AdShowStateCallBack {
+                    override fun onAdDismiss() {
+                        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdDismiss()")
+                        jumpActivity()
+                    }
 
+                    override fun onAdShowed() {
+
+                    }
+
+                    override fun onAdShowFail() {
+                        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdShowFail()")
+                        jumpActivity()
+                    }
+
+                })
+            }
+        })
+    }
+
+    private fun reqAd() {
+        //请求开屏广告
+        AdManager.loadAd(AdMob.AD_OPEN, this)
+        //预加载插屏广告2
+        AdManager.loadAd(AdMob.AD_INTER_IB,null)
+        //预加载插屏广告1
+        AdManager.loadAd(AdMob.AD_INTER_CLICK,null)
     }
 
     override fun bindViewId() {
@@ -88,7 +122,8 @@ class LaunchActivity : BaseActivity(), AdManager.OnAdStateListener {
                 end()
             }.catch {
                 //错误
-                Log.e("TAG", it.message ?: "协程倒计时错误")
+                Timber.tag(ConfigurationUtil.LOG_TAG)
+                    .e("LaunchActivity----countDown()--协程倒计时错误:${it.message} ")
             }.collect {
                 //更新ui
                 next(time - it)
@@ -97,13 +132,12 @@ class LaunchActivity : BaseActivity(), AdManager.OnAdStateListener {
     }
 
     private fun jumpActivity() {
-        val isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
         if (isHotLaunch) {//热启动关闭闪屏页，恢复到之前页面
             finish()
-            Timber.tag(AdConfigurationUtil.LOG_TAG)
+            Timber.tag(ConfigurationUtil.LOG_TAG)
                 .d("LaunchActivity----jumpActivity()--关闭页面显示之前页面")
         } else {
-            Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----jumpActivity()--跳转到主页")
+            Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----jumpActivity()--跳转到主页")
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
@@ -111,23 +145,12 @@ class LaunchActivity : BaseActivity(), AdManager.OnAdStateListener {
     }
 
     override fun onAdLoaded() {
-        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoaded()")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoaded()")
         delayIntervalTime = 10L
     }
 
     override fun onAdLoadFail() {
-        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoadFail()")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoadFail()")
         jumpActivity()
-    }
-
-    override fun onShowAdComplete() {
-        Timber.tag(AdConfigurationUtil.LOG_TAG).d("LaunchActivity----onShowAdComplete()")
-        jumpActivity()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        //取消广告回调监听
-        AdManager.onAdStateListener = null
     }
 }
