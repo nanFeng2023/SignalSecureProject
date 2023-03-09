@@ -391,7 +391,8 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
 
     override fun onServiceConnected(service: IShadowsocksService) = changeVpnState(
         try {
-            Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----onServiceConnected()---state:${service.state}")
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("MainActivity----onServiceConnected()---state:${service.state}")
             BaseService.State.values()[service.state]
         } catch (_: RemoteException) {
             BaseService.State.Idle
@@ -602,10 +603,8 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         if (item.isChecked) drawer.closeDrawers() else {
             when (item.itemId) {
                 R.id.contract_us_menu -> {
-                    val addresses: Array<String> = arrayOf("799327465@qq.com")
-                    val subject = "测试邮箱功能"
-                    ProjectUtil.callEmail(addresses, subject, this)
-//                    ProjectUtil.callEmail(this@MainActivity,subject)
+                    val addresses: Array<String> = arrayOf(ConfigurationUtil.MAIL_ACCOUNT)
+                    ProjectUtil.callEmail(addresses, this)
                 }
                 R.id.privacy_policy_menu -> {//隐私政策
                     startActivity(Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
@@ -716,10 +715,12 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             }
         }
         //随机选择一个
-        val index = Random().nextInt(smartCityList.size)
-        currentVpnBean = smartCityList[index]
-        //更新profile
-        updateVpnInfo()
+        if (smartCityList.size > 0) {
+            val index = Random().nextInt(smartCityList.size)
+            currentVpnBean = smartCityList[index]
+            //更新profile
+            updateVpnInfo()
+        }
     }
 
     //选择排序

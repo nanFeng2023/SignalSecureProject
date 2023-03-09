@@ -1,6 +1,5 @@
 package com.ssv.signalsecurevpn
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -49,7 +48,6 @@ class SettingAdapter(private val dataList: List<VpnBean>) :
 
         //item点击事件
         holder.itemView.setOnClickListener {
-            Log.i("TAG", "curSelectName:$curSelectName,getName:${dataList[position].getName()}")
             if ((position == 0 && ProjectUtil.stopped) || curSelectName != dataList[position].getName()) {
                 onItemViewClick.invoke(it, position)
             }
@@ -58,10 +56,6 @@ class SettingAdapter(private val dataList: List<VpnBean>) :
 
     /*选中状态判断*/
     private fun selectState(holder: SettingViewHolder, vpnBean: VpnBean) {
-        Log.i(
-            "TAG",
-            "selectState()---curSelectName:$curSelectName---vpnBean.getName:${vpnBean.getName()}"
-        )
         if (curSelectName == vpnBean.getName()) {
             holder.clItem.setBackgroundResource(R.drawable.shape_rv_item_checked_setting)
         } else {

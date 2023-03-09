@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.telephony.TelephonyManager
 import android.text.TextUtils
-import android.util.Log
 import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.callback.StringCallback
@@ -29,12 +28,11 @@ import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 object NetworkUtil {
-    const val BASE_URL = "https://ipinfo.io/json"
-    const val COUNTRY_HK = "HK"//HongKong 香港
-    const val COUNTRY_CN = "CN"//China 大陆
-    const val COUNTRY_IRAN = "Iran"//伊朗
-    const val COUNTRY_MACAU = "Macau" //澳门
-    const val PRIVACY_POLICY_URL = "https://www.baidu.com"
+    private const val BASE_URL = "https://ipinfo.io/json"
+    private const val COUNTRY_HK = "HK"//HongKong 香港
+    private const val COUNTRY_CN = "CN"//China 大陆 //todo 正是包时候记得打开
+    private const val COUNTRY_IRAN = "Iran"//伊朗
+    private const val COUNTRY_MACAU = "Macau" //澳门
 
     //smart
     lateinit var cityList: ArrayList<String>
@@ -61,15 +59,16 @@ object NetworkUtil {
     private fun parseServiceData(data: String, dataList: ArrayList<VpnBean>) {
         val jsonObject = JSONObject(data)
         val optJSONArray = jsonObject.optJSONArray("list")
-        Log.i("NetworkUtil--parseData", "data:$optJSONArray")
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("NetworkUtil----parseServiceData()---本地数据:$optJSONArray")
         for (i in 0 until (optJSONArray?.length()!!)) {
             val obj = optJSONArray.optJSONObject(i)
-            val pwd = obj.optString("pwd")
-            val account = obj.optString("account")
-            val port = obj.optInt("port")
-            val country = obj.optString("country")
-            val city = obj.optString("city")
-            val ip = obj.optString("ip")
+            val pwd = obj.optString("ssv_pd")
+            val account = obj.optString("ssv_act")
+            val port = obj.optInt("ssv_pt")
+            val country = obj.optString("ssv_coy")
+            val city = obj.optString("ssv_ciy")
+            val ip = obj.optString("ssv_ip")
             val vpnBean = VpnBean()
             vpnBean.pwd = pwd
             vpnBean.account = account

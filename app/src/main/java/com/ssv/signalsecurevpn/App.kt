@@ -5,7 +5,6 @@ import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
-import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.github.shadowsocks.Core
@@ -37,9 +36,7 @@ class App : MultiDexApplication() {
         super.onCreate()
         //服务要在初始化在子进程，不能进行主进程判断后去初始化
         Core.init(this, MainActivity::class)
-        Log.i("main", "App---onCreate，isColdLaunch：$isColdLaunch")
         if (isMainProcess()) {
-            Log.i("main", "App---onCreate---isMainProcess")
             Firebase.initialize(this)
             AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
             //初始化okGo
@@ -84,6 +81,7 @@ class App : MultiDexApplication() {
         super.onConfigurationChanged(newConfig)
         Core.updateNotificationChannels()
     }
+
 
     private fun initReadyOkGo() {
         val headers = HttpHeaders()

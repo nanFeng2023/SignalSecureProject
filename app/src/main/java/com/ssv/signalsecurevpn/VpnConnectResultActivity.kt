@@ -5,6 +5,7 @@ import android.widget.TextView
 import com.ssv.signalsecurevpn.call.TimeDataCallBack
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import com.ssv.signalsecurevpn.util.TimeUtil
+import java.util.*
 
 /*
 * vpn连接结果页
@@ -20,7 +21,7 @@ class VpnConnectResultActivity : BaseActivity() {
     override fun businessProcess() {
         tvTitle.setText(R.string.result)
         val country = intent.getStringExtra(ProjectUtil.COUNTRY_KEY)
-        country?.let { ivCountry.setImageResource(ProjectUtil.selectCountryIcon(it)) }
+        country?.let { ivCountry.setImageResource(ProjectUtil.selectCountryIcon(it.lowercase(Locale.getDefault()))) }
 
         timeDataCallBack = object : TimeDataCallBack {
             override fun onTime(time: String) {

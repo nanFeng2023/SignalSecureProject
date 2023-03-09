@@ -1,44 +1,20 @@
 {
   "list": [
     {
-      "pwd": "u1rRWTssNv0p11",
-      "account": "aes-256-cfb",
-      "port": 1000,
-      "country": "Unite State",
-      "city": "new york",
-      "ip": "39.156.66.10"
+      "ssv_pd": "u1rRWTssNv0p11",
+      "ssv_act": "aes-256-cfb",
+      "ssv_pt": 1000,
+      "ssv_coy": "United States",
+      "ssv_ciy": "new york",
+      "ssv_ip": "39.156.66.10"
     },
     {
-      "pwd": "u1rRWTssNv0p22",
-      "account": "aes-256-cfb",
-      "port": 2000,
-      "country": "Canada",
-      "city": "ottawa",
-      "ip": "118.116.2.140"
-    },
-    {
-      "pwd": "u1rRWTssNv0p33",
-      "account": "aes-256-cfb",
-      "port": 3000,
-      "country": "Australia",
-      "city": "canberra",
-      "ip": "118.123.0.238"
-    },
-    {
-      "pwd": "u1rRWTssNv0p44",
-      "account": "aes-256-cfb",
-      "port": 4000,
-      "country": "Belgium",
-      "city": "Brussels",
-      "ip": "49.7.37.76"
-    },
-    {
-      "pwd": "u1rRWTssNv0p55",
-      "account": "aes-256-cfb",
-      "port": 5000,
-      "country": "Brazil",
-      "city": "Brasilia",
-      "ip": "108.74.50.105"
+      "ssv_pd": "u1rRWTssNv0p22",
+      "ssv_act": "aes-256-cfb",
+      "ssv_pt": 2000,
+      "ssv_coy": "Canada",
+      "ssv_ciy": "ottawa",
+      "ssv_ip": "118.116.2.140"
     }
   ],
   "cityList": [

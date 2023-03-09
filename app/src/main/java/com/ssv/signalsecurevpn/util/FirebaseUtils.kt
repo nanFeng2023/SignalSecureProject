@@ -10,8 +10,8 @@ object FirebaseUtils {
         val remoteConfig = Firebase.remoteConfig
         remoteConfig.fetchAndActivate().addOnCompleteListener {
             if (it.isSuccessful) {
-                val sigvn_ad = remoteConfig.getString("sigvn_ad")
-                SharePreferenceUtil.putString(AdMob.SIGVN_AD, sigvn_ad)
+                val adData = remoteConfig.getString("sigvn_ad")
+                SharePreferenceUtil.putString(AdMob.SIGVN_AD, adData)
             }
         }
     }
