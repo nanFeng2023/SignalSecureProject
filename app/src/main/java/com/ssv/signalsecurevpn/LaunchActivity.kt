@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -10,15 +10,14 @@ import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.callback.StringCallback
 import com.lzy.okgo.model.Response
-import com.testbird.signalsecurevpn.util.NetworkUtil
-import com.testbird.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.util.NetworkUtil
+import com.ssv.signalsecurevpn.util.ProjectUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONException
 import org.json.JSONObject
-import javax.security.auth.login.LoginException
 
 /*
 * 启动页面

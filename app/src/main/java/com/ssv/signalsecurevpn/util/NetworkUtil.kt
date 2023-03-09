@@ -1,11 +1,11 @@
-package com.testbird.signalsecurevpn.util
+package com.ssv.signalsecurevpn.util
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.telephony.TelephonyManager
 import android.util.Log
-import com.testbird.signalsecurevpn.App
-import com.testbird.signalsecurevpn.bean.VpnBean
+import com.ssv.signalsecurevpn.App
+import com.ssv.signalsecurevpn.bean.VpnBean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -24,7 +24,6 @@ object NetworkUtil {
     const val COUNTRY_CN = "CN"//China 大陆
     const val COUNTRY_IRAN = "Iran"//伊朗
     const val COUNTRY_MACAU = "Macau" //澳门
-    const val PRIVACY_POLICY_URL = "https://www.baidu.com"
 
     fun obtainNativeJsonData(): StringBuilder {
         val assetManager = App.appContext.assets
@@ -47,18 +46,18 @@ object NetworkUtil {
         Log.i("NetworkUtil--parseData", "data:$optJSONArray")
         for (i in 0 until (optJSONArray?.length()!!)) {
             val obj = optJSONArray.optJSONObject(i)
-            val pwd = obj.optString("pwd")
-            val account = obj.optString("account")
-            val port = obj.optInt("port")
-            val country = obj.optString("country")
-            val city = obj.optString("city")
-            val ip = obj.optString("ip")
+            val pwd = obj.optString("ssv_pd")
+            val account = obj.optString("ssv_act")
+            val port = obj.optInt("ssv_pt")
+            val country = obj.optString("ssv_coy")
+            val city = obj.optString("ssv_ciy")
+            val ip = obj.optString("ssv_ip")
             val vpnBean = VpnBean()
             vpnBean.pwd = pwd
             vpnBean.account = account
             vpnBean.port = port
-            vpnBean.country = country
-            vpnBean.city = city
+            vpnBean.country = country.lowercase(Locale.getDefault())
+            vpnBean.city = city.lowercase(Locale.getDefault())
             vpnBean.ip = ip
             dataList.add(vpnBean)
         }

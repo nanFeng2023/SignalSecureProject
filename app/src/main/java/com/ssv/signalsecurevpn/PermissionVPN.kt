@@ -1,11 +1,10 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import androidx.activity.result.contract.ActivityResultContract
-import com.github.shadowsocks.Core
 import com.github.shadowsocks.preference.DataStore
 import com.github.shadowsocks.utils.Key
 import timber.log.Timber

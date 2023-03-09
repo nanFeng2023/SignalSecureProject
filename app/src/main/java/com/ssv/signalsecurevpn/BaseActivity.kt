@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
@@ -7,13 +7,11 @@ import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.View
-import android.view.View.OnClickListener
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.testbird.signalsecurevpn.util.NetworkUtil
-import com.testbird.signalsecurevpn.util.ProjectUtil
-import com.testbird.signalsecurevpn.widget.AlertDialogUtil
+import com.ssv.signalsecurevpn.util.NetworkUtil
+import com.ssv.signalsecurevpn.util.ProjectUtil
 
 abstract class BaseActivity : AppCompatActivity() {
 

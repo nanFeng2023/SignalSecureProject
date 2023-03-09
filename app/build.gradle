@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace 'com.testbird.signalsecurevpn'
+    namespace 'com.ssv.signalsecurevpn'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.testbird.signalsecurevpn"
+        applicationId "com.ssv.signalsecurevpn"
         minSdk 28
         targetSdk 33
         versionCode 1

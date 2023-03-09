@@ -117,7 +117,7 @@
             app:menu="@menu/nav_menu"/>
     </androidx.drawerlayout.widget.DrawerLayout>
 
-    <com.testbird.signalsecurevpn.widget.MaskView
+    <com.ssv.signalsecurevpn.widget.MaskView
         android:id="@+id/mask_view_main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

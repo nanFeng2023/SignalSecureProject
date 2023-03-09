@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn.widget
+package com.ssv.signalsecurevpn.widget
 
 import android.content.Context
 import android.content.DialogInterface

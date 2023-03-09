@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,8 +8,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.testbird.signalsecurevpn.bean.VpnBean
-import com.testbird.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.bean.VpnBean
+import com.ssv.signalsecurevpn.util.ProjectUtil
 
 /*
 * vpn选择页面适配器

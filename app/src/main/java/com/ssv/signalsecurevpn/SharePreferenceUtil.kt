@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.annotation.SuppressLint
 import android.content.Context

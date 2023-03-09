@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn.bean
+package com.ssv.signalsecurevpn.bean
 
 class IpTestBean {
     var ip: String? = null

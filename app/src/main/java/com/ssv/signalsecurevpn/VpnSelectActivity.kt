@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -7,9 +7,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.testbird.signalsecurevpn.util.NetworkUtil
-import com.testbird.signalsecurevpn.util.ProjectUtil
-import com.testbird.signalsecurevpn.widget.AlertDialogUtil
+import com.ssv.signalsecurevpn.util.NetworkUtil
+import com.ssv.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.widget.AlertDialogUtil
 
 /*
 * VPN选择页面

@@ -1,14 +1,12 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.app.Activity
-import android.app.ActivityManager
 import android.app.Application.ActivityLifecycleCallbacks
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import com.testbird.signalsecurevpn.call.FrontAndBackgroundCallBack
-import com.testbird.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
+import com.ssv.signalsecurevpn.util.ProjectUtil
 
 object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
     private var finalCount: Int = 0

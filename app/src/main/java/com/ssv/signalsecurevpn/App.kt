@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.annotation.SuppressLint
 import android.app.ActivityManager
@@ -7,21 +7,17 @@ import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.work.Configuration.Provider
 import com.github.shadowsocks.Core
-import com.google.firebase.FirebaseApp
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.ktx.initialize
 import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheEntity
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.model.HttpHeaders
 import com.lzy.okgo.model.HttpParams
-import com.testbird.signalsecurevpn.util.NetworkUtil
+import com.ssv.signalsecurevpn.util.NetworkUtil
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
-class App : Application(), Provider by Core {
+class App : Application(){
     companion object {
         lateinit var appContext: Application
         var isColdLaunch: Boolean = true//第一次或杀掉进程再进都是冷启动
@@ -35,9 +31,6 @@ class App : Application(), Provider by Core {
         super.onCreate()
         //服务要在初始化在子进程，不能进行主进程判断后去初始化
         Core.init(this, MainActivity::class)
-//        Firebase.initialize(this)
-//        FirebaseApp.initializeApp( this)
-        Log.i("main", "App---onCreate，isColdLaunch：$isColdLaunch")
         if (isMainProcess()) {
             Log.i("main", "App---onCreate---isMainProcess")
             AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)

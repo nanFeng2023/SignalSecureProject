@@ -1,9 +1,9 @@
-package com.testbird.signalsecurevpn.util
+package com.ssv.signalsecurevpn.util
 
 import android.os.Looper
 import android.os.Handler
 import android.os.SystemClock
-import com.testbird.signalsecurevpn.call.TimeDataCallBack
+import com.ssv.signalsecurevpn.call.TimeDataCallBack
 
 object TimeUtil {
     private var handler: Handler? = Handler(Looper.getMainLooper())

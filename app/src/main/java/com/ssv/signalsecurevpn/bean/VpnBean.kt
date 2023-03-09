@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn.bean
+package com.ssv.signalsecurevpn.bean
 
 import android.os.Parcel
 import android.os.Parcelable

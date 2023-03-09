@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn
+package com.ssv.signalsecurevpn
 
 import android.animation.Animator
 import android.content.Intent
@@ -36,15 +36,16 @@ import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.callback.StringCallback
 import com.lzy.okgo.model.Response
-import com.testbird.signalsecurevpn.bean.IpTestBean
-import com.testbird.signalsecurevpn.bean.VpnBean
-import com.testbird.signalsecurevpn.call.FrontAndBackgroundCallBack
-import com.testbird.signalsecurevpn.call.TimeDataCallBack
-import com.testbird.signalsecurevpn.util.NetworkUtil
-import com.testbird.signalsecurevpn.util.ProjectUtil
-import com.testbird.signalsecurevpn.util.TimeUtil
-import com.testbird.signalsecurevpn.widget.AlertDialogUtil
-import com.testbird.signalsecurevpn.widget.MaskView
+import com.ssv.signalsecurevpn.bean.IpTestBean
+import com.ssv.signalsecurevpn.bean.VpnBean
+import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
+import com.ssv.signalsecurevpn.call.TimeDataCallBack
+import com.ssv.signalsecurevpn.util.ConfigurationUtil
+import com.ssv.signalsecurevpn.util.NetworkUtil
+import com.ssv.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.util.TimeUtil
+import com.ssv.signalsecurevpn.widget.AlertDialogUtil
+import com.ssv.signalsecurevpn.widget.MaskView
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -411,15 +412,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         }
     )
 
-//    override fun onServiceConnected(service: IShadowsocksService) {
-//        Log.i("TAG", "onServiceConnected----11:${service.state}")
-//        val state = BaseService.State.values()[service.state]
-//        if (BaseService.State.Stopped == state) {
-//            Log.i("TAG", "onServiceConnected----22:${service.state}")
-//            changeVpnState(BaseService.State.Stopped)
-//        }
-//    }
-
     override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
         Log.i("TAG", "onPreferenceDataStoreChanged()")
         when (key) {
@@ -568,10 +560,8 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         if (item.isChecked) drawer.closeDrawers() else {
             when (item.itemId) {
                 R.id.contract_us_menu -> {
-                    val addresses: Array<String> = arrayOf("799139668@qq.com")
-                    val subject = "测试邮箱功能"
-                    ProjectUtil.callEmail(addresses, subject, this)
-//                    ProjectUtil.callEmail(this@MainActivity,subject)
+                    val addresses: Array<String> = arrayOf(ConfigurationUtil.MAIL_ACCOUNT)
+                    ProjectUtil.callEmail(addresses,this)
                 }
                 R.id.privacy_policy_menu -> {//隐私政策
                     startActivity(Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
@@ -589,7 +579,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
 
     /*检测IP*/
     private fun detectionIp(isFromStartConnect: Boolean) {
-        Log.i("TAG", "MainActivity---detectionIp()")
         val country = Locale.getDefault().country
         val language = Locale.getDefault().language
         Log.i(

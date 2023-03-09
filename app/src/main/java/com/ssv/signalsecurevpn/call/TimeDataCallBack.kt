@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn.call
+package com.ssv.signalsecurevpn.call
 
 interface TimeDataCallBack {
     fun onTime(time: String)

@@ -1,4 +1,4 @@
-package com.testbird.signalsecurevpn.util
+package com.ssv.signalsecurevpn.util
 
 import android.app.Activity
 import android.content.Context
@@ -10,10 +10,10 @@ import android.os.Build
 import android.os.Parcelable
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
-import com.testbird.signalsecurevpn.R
-import java.io.File
+import com.ssv.signalsecurevpn.R
 
 /*帮助类*/
 object ProjectUtil {
@@ -64,11 +64,31 @@ object ProjectUtil {
     fun selectCountryIcon(countryName: String): Int {
         val countryIconResourceId = when (countryName) {
             DEFAULT_FAST_SERVERS -> R.mipmap.ic_default_country
-            "Unite State" -> R.mipmap.ic_united_states
-            "Canada" -> R.mipmap.ic_canada
-            "Australia" -> R.mipmap.ic_australia
-            "Belgium" -> R.mipmap.ic_belgium
-            "Brazil" -> R.mipmap.ic_brazil
+            "united states" -> R.mipmap.ic_united_states
+            "canada" -> R.mipmap.ic_canada
+            "australia" -> R.mipmap.ic_australia
+            "belgium" -> R.mipmap.ic_belgium
+            "brazil" -> R.mipmap.ic_brazil
+            "united kingdom" -> R.mipmap.ic_united_kingdom
+            "france" -> R.mipmap.ic_france
+            "germany" -> R.mipmap.ic_germany
+            "hong kong" -> R.mipmap.ic_hong_kong
+            "india" -> R.mipmap.ic_india
+            "israel" -> R.mipmap.ic_israel
+            "italy" -> R.mipmap.ic_italy
+            "japan" -> R.mipmap.ic_japan
+            "south korea" -> R.mipmap.ic_south_korea
+            "netherlands" -> R.mipmap.ic_netherlands
+            "new zealand" -> R.mipmap.ic_new_zealand
+            "norway" -> R.mipmap.ic_norway
+            "ireland" -> R.mipmap.ic_ireland
+            "russian federation" -> R.mipmap.ic_russian_federation
+            "singapore" -> R.mipmap.ic_singapore
+            "sweden" -> R.mipmap.ic_sweden
+            "switzerland" -> R.mipmap.ic_switzerland
+            "taiwan" -> R.mipmap.ic_taiwan
+            "turkey" -> R.mipmap.ic_turkey
+            "united arab emirates" -> R.mipmap.ic_united_arab_emirates
             else -> {
                 R.mipmap.ic_default_country
             }
@@ -105,27 +125,27 @@ object ProjectUtil {
     }
 
 
-    fun callEmail(addresses: Array<String>, subject: String, context: Context) {
-        val intent = Intent(Intent.ACTION_SENDTO)
-        intent.data = Uri.parse("mailto:")
-        intent.putExtra(Intent.EXTRA_EMAIL, addresses)
-        intent.putExtra(Intent.EXTRA_SUBJECT, subject)
-        context.startActivity(intent)
-
-//        val intent = Intent(Intent.ACTION_SENDTO)
-//        intent.data = Uri.parse("mailto:$addresses")
-////        intent.putExtra(Intent.EXTRA_EMAIL, addresses)
-//        intent.putExtra(Intent.EXTRA_SUBJECT, "标题")
-//        intent.putExtra(Intent.EXTRA_TEXT, "内容")
-//        context.startActivity(intent)
+    fun callEmail(addresses: Array<String>, context: Context) {
+        try {
+            val intent = Intent(Intent.ACTION_SENDTO)
+            intent.data = Uri.parse("mailto:")
+            intent.putExtra(Intent.EXTRA_EMAIL, addresses)
+//            intent.putExtra(Intent.EXTRA_SUBJECT, subject)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "Please download Google Mail", Toast.LENGTH_SHORT).show()
+        }
     }
-
 
     fun callShare(context: Context) {//分享文本
         val shareIntent = Intent(Intent.ACTION_SEND)
         shareIntent.type = "text/plain"
-        shareIntent.putExtra(Intent.EXTRA_TEXT, "链接")
-        context.startActivity(Intent.createChooser(shareIntent, "分享"))
+        shareIntent.putExtra(
+            Intent.EXTRA_TEXT,
+            "${ConfigurationUtil.SHARE_URL}${context.packageName}"
+        )
+        context.startActivity(Intent.createChooser(shareIntent, "share"))
     }
 
     fun openGooglePlay(context: Context) {
