@@ -1,0 +1,29 @@
+package com.ssv.signalsecurevpn
+
+import com.ssv.signalsecurevpn.ad.AdManager
+import org.junit.Test
+
+import org.junit.Assert.*
+
+/**
+ * Example local unit test, which will execute on the development machine (host).
+ *
+ * See [testing documentation](http://d.android.com/tools/testing).
+ */
+class ExampleUnitTest {
+    @Test
+    fun addition_isCorrect() {
+
+
+
+
+
+        assertEquals(4, 2 + 2)
+
+//        val adManager = AdManager()
+//        adManager.abstractAd = AdMob()
+//        adManager.loadAd("")
+//        adMobManager.showAd()
+
+    }
+}

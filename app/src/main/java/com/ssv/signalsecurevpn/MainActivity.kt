@@ -716,7 +716,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                 }
             }
         }
-        var count = 0
+        val count = 0
         //ip测速
         for (i in 0 until smartCityList.size) {
             val vpnBean = smartCityList[i]
@@ -724,10 +724,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             ip?.let {
                 lifecycleScope.launch {
                     val ipDelay = NetworkUtil.delayTest(it, 2000)
-                    Log.i(
-                        "TAG",
-                        "ip:$ip----测速：$ipDelay---count:$count---size:${smartCityList.size}---1111"
-                    )
                     ipTestCallBack.invoke(ip, ipDelay, count, smartCityList.size)
                 }
             }
@@ -737,19 +733,17 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             bean.ip = ip
             bean.ipDelayTime = delayTime
             ipTestList.add(bean)
-            Log.i(
-                "TAG",
-                "ip:$ip----测速：$delayTime---count:$countNum---size:${smartCityList.size}---2222"
-            )
             if (countNum == listSize) {//测速完成
                 sortIpDelay()
             }
         }
         //随机选择一个
-        val index = Random().nextInt(smartCityList.size)
-        currentVpnBean = smartCityList[index]
-        //更新profile
-        updateVpnInfo()
+        if (smartCityList.size>0){
+            val index = Random().nextInt(smartCityList.size)
+            currentVpnBean = smartCityList[index]
+            //更新profile
+            updateVpnInfo()
+        }
     }
 
     //选择排序

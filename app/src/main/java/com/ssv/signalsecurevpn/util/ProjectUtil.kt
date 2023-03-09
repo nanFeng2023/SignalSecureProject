@@ -134,7 +134,7 @@ object ProjectUtil {
             context.startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "Please download Google Mail", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Contact us ${addresses[0]}", Toast.LENGTH_SHORT).show()
         }
     }
 
