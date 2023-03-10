@@ -10,6 +10,9 @@ object FirebaseUtils {
         val remoteConfig = Firebase.remoteConfig
         remoteConfig.fetchAndActivate().addOnCompleteListener {
             if (it.isSuccessful) {
+                val serviceVpnData = remoteConfig.getString("sigvn_ser")
+                SharePreferenceUtil.putString(AdMob.SIGVN_SERVICE, serviceVpnData)
+
                 val adData = remoteConfig.getString("sigvn_ad")
                 SharePreferenceUtil.putString(AdMob.SIGVN_AD, adData)
             }

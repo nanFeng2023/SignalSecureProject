@@ -40,6 +40,7 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
             NetworkUtil.detectionIp(null)
             isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
             if (isHotLaunch) {//热启动
+                AdMob.isRefreshNativeAd = true
                 if (!AdManager.isAdAvailable(AdMob.AD_OPEN)!!) {//没有缓存或过期，重新请求
                     reqAd()
                 }
@@ -83,6 +84,10 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
         AdManager.loadAd(AdMob.AD_INTER_IB,null)
         //预加载插屏广告1
         AdManager.loadAd(AdMob.AD_INTER_CLICK,null)
+        //预加载原生广告home
+        AdManager.loadAd(AdMob.AD_NATIVE_HOME,null)
+        //预加载原生广告result
+        AdManager.loadAd(AdMob.AD_NATIVE_RESULT,null)
     }
 
     override fun bindViewId() {

@@ -98,13 +98,36 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="30dp"
                 android:scaleType="centerInside"
-                android:visibility="gone"
                 android:src="@mipmap/ic_ad_main"
+                android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/iv_connect_progress_state_main" />
 
+            <FrameLayout
+                android:id="@+id/nav_ad_parent_group_main"
+                android:layout_width="match_parent"
+                android:layout_height="152dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="30dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/shape_viewgroup_ad_main"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/iv_connect_progress_state_main" />
 
+            <ImageView
+                android:id="@+id/iv_ad_bg_main"
+                android:layout_width="match_parent"
+                android:layout_height="152dp"
+                android:layout_marginStart="12dp"
+                android:scaleType="fitXY"
+                android:layout_marginTop="30dp"
+                android:layout_marginEnd="12dp"
+                android:src="@mipmap/ic_ad_main"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/iv_connect_progress_state_main" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -114,7 +137,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="start"
             app:headerLayout="@layout/layout_nav_header"
-            app:menu="@menu/nav_menu"/>
+            app:menu="@menu/nav_menu" />
     </androidx.drawerlayout.widget.DrawerLayout>
 
     <com.ssv.signalsecurevpn.widget.MaskView

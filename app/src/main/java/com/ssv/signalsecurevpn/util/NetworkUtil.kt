@@ -186,22 +186,27 @@ object NetworkUtil {
         firstItemVpnBean.country = ProjectUtil.DEFAULT_FAST_SERVERS
         serviceDataList.add(firstItemVpnBean)
         //1.先服务器接口获取列表
-
-        //2.没有1才走本地
-        val obtainNativeJsonData = obtainNativeJsonData("data.json")
-        parseServiceData(obtainNativeJsonData.toString(), serviceDataList)
-        parseCityListData(obtainNativeJsonData.toString(), cityList)
+        val serviceVpnData: String? = SharePreferenceUtil.getString(AdMob.SIGVN_SERVICE)
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("NetworkUtil----obtainServiceData()---远端服务器vpn数据:$serviceVpnData")
+        if (serviceVpnData != null && !TextUtils.isEmpty(serviceVpnData)) {
+            parseServiceData(serviceVpnData, serviceDataList)
+            parseCityListData(serviceVpnData, cityList)
+        } else {
+            //2.没有1才走本地
+            val obtainNativeJsonData = obtainNativeJsonData("data.json")
+            parseServiceData(obtainNativeJsonData.toString(), serviceDataList)
+            parseCityListData(obtainNativeJsonData.toString(), cityList)
+        }
     }
 
     fun obtainAdData() {
-        //1.先服务器接口
-//        FirebaseUtils.loadConfigure()
-        val adData : String? = SharePreferenceUtil.getString(AdMob.SIGVN_AD)
+        val adData: String? = SharePreferenceUtil.getString(AdMob.SIGVN_AD)
         Timber.tag(ConfigurationUtil.LOG_TAG)
             .d("NetworkUtil----obtainAdData()---远端广告数据:$adData")
-        adDataResult = if (!TextUtils.isEmpty(adData)){
+        adDataResult = if (!TextUtils.isEmpty(adData)) {
             adData?.let { parseAdData(it) }
-        }else{
+        } else {
             //2.没有1才本地
             val obtainNativeJsonData = obtainNativeJsonData("ad.json")
             parseAdData(obtainNativeJsonData.toString())
@@ -229,7 +234,7 @@ object NetworkUtil {
         return adDataResult
     }
 
-    private fun parseAdData(optJSONArray: JSONArray) :ArrayList<AdBean>{
+    private fun parseAdData(optJSONArray: JSONArray): ArrayList<AdBean> {
         val adBeanList: ArrayList<AdBean> = ArrayList()
         for (i in 0 until (optJSONArray.length())) {
             val obj = optJSONArray.optJSONObject(i)
@@ -249,7 +254,7 @@ object NetworkUtil {
 
     /*检测IP为主，地区限制为辅*/
     fun detectionIp(businessProcessCallBack: BusinessProcessCallBack?) {
-        isRestrictArea=false
+        isRestrictArea = false
         OkGo.get<String>(BASE_URL)
             .tag(this)
             .cacheMode(CacheMode.NO_CACHE)
@@ -261,7 +266,7 @@ object NetworkUtil {
                         try {
                             val jsonObj = JSONObject(it.body())
                             val country = jsonObj.opt("country")?.toString()
-                            country?.let { it1 -> restrictArea(it1,businessProcessCallBack) }
+                            country?.let { it1 -> restrictArea(it1, businessProcessCallBack) }
                         } catch (e: JSONException) {
                             e.printStackTrace()
                         }
@@ -273,7 +278,7 @@ object NetworkUtil {
                     Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("NetworkUtil----detectionIp()---onError()---error:$response")
                     val country = Locale.getDefault().country
-                    restrictArea(country,businessProcessCallBack)
+                    restrictArea(country, businessProcessCallBack)
                 }
             })
     }

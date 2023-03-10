@@ -18,6 +18,7 @@ import com.lzy.okgo.model.HttpHeaders
 import com.lzy.okgo.model.HttpParams
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
+import com.ssv.signalsecurevpn.util.FirebaseUtils
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -43,15 +44,17 @@ class App : MultiDexApplication() {
             initReadyOkGo()
             //注册生命周期监听所有页面的返回或home键实现热启动 引导到主页面
             registerActivityLifecycleCallbacks(CustomActivityLifecycleCallback)
-            //请求服务器列表  预加载数据
-            NetworkUtil.obtainServiceData()
-            Core.stopService()//杀掉主进程重启关闭VPN
             //广告注册
             MobileAds.initialize(this) {}
+            Core.stopService()//杀掉主进程重启关闭VPN
             //日志开关
             if (BuildConfig.DEBUG) {
 //                Timber.plant(Timber.DebugTree())
             }
+            //远端请求服务器和广告配置数据
+//            FirebaseUtils.loadConfigure()
+            //请求服务器列表  预加载数据
+            NetworkUtil.obtainServiceData()
             //请求广告数据，预加载
             NetworkUtil.obtainAdData()
             //注册AdMob

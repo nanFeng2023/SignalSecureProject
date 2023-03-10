@@ -1,7 +1,17 @@
 package com.ssv.signalsecurevpn.ad
 
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
@@ -9,13 +19,18 @@ import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdOptions
+import com.google.android.gms.ads.nativead.NativeAdView
 import com.ssv.signalsecurevpn.App
+import com.ssv.signalsecurevpn.R
 import com.ssv.signalsecurevpn.bean.AdBean
 import com.ssv.signalsecurevpn.bean.AdDataResult
 import com.ssv.signalsecurevpn.bean.AdWrap
 import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.AdUtil
 import com.ssv.signalsecurevpn.util.NetworkUtil
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Date
 
@@ -26,6 +41,7 @@ object AdMob : AbstractAd() {
     const val AD_INTER_IB = "inter-ib"
     const val AD_NATIVE_HOME = "native_home"
     const val AD_NATIVE_RESULT = "native_result"
+    const val SIGVN_SERVICE = "sigvn_service"
     const val SIGVN_AD = "sigvn_ad"
     var reReqLoadAd = true
     private const val SHOW_AD_NUM_MAX_DAY = 50
@@ -34,6 +50,7 @@ object AdMob : AbstractAd() {
 
     private var adWrapHashMap: HashMap<String, AdWrap> = HashMap()
     private var adBeanList: ArrayList<AdBean>? = null
+    var isRefreshNativeAd=false
 
     override fun loadAd(type: String, adLoadStateCallBack: AdLoadStateCallBack?) {
         Timber.tag(ConfigurationUtil.LOG_TAG)
@@ -97,7 +114,7 @@ object AdMob : AbstractAd() {
         } else if (AD_INTER_CLICK == adType || AD_INTER_IB == adType) {
             loadInterAd(adBean, adType)
         } else if (AD_NATIVE_HOME == adType || AD_NATIVE_RESULT == adType) {
-            loadNativeAd()
+            loadNativeAd(adBean, adType)
         }
     }
 
@@ -106,8 +123,33 @@ object AdMob : AbstractAd() {
         return showNumLimit >= SHOW_AD_NUM_MAX_DAY || clickNumLimit >= CLICK_AD_NUM_MAX_DAY
     }
 
-    private fun loadNativeAd() {
-
+    private fun loadNativeAd(adBean: AdBean, adType: String) {
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("AdMob----loadNativeAd()")
+        val adWrap = adWrapHashMap[adType]
+        if (adWrap?.isAdLoading!! || adWrap.isAdAvailable()) {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("AdMob----loadNativeAd()---广告正在请求或有广告可以使用，不用加载")
+            return
+        }
+        adBean.ssv_id?.let {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("AdMob----loadNativeAd()---开始请求广告,优先级：${adBean.ssv_priority},广告ID：${adBean.ssv_id}")
+            adWrap.isAdLoading = true
+            val builder = AdLoader.Builder(App.appContext, adBean.ssv_id!!)
+            val adLoader = builder.forNativeAd {
+                Timber.tag(ConfigurationUtil.LOG_TAG)
+                    .d("AdMob----loadNativeAd()---forNativeAd()---nativeAd:$it")
+                onLoadSuccessSetAdWrapState(it, adWrap)
+            }.withAdListener(object : AdListener() {
+                override fun onAdFailedToLoad(loadError: LoadAdError) {
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("AdMob----loadNativeAd()---onAdFailedToLoad()---loadError:$loadError")
+                    adWrap.adLoadStateCallBack?.onAdLoadFail()
+                }
+            }).withNativeAdOptions(NativeAdOptions.Builder().build()).build()
+            adLoader.loadAd(AdRequest.Builder().build())
+        }
     }
 
     private fun loadInterAd(adBean: AdBean, adType: String) {
@@ -121,8 +163,8 @@ object AdMob : AbstractAd() {
         }
 
         adBean.ssv_id?.let {
-            val request = AdRequest.Builder().build()
             adWrap.isAdLoading = true
+            val request = AdRequest.Builder().build()
             InterstitialAd.load(App.appContext, it, request, object :
                 InterstitialAdLoadCallback() {
                 override fun onAdLoaded(interAd: InterstitialAd) {
@@ -204,11 +246,27 @@ object AdMob : AbstractAd() {
     override fun showAd(
         activity: AppCompatActivity,
         adType: String,
-        adShowStateCallBack: AdShowStateCallBack?
+        adShowStateCallBack: AdShowStateCallBack?,
+        layoutId: Int?,
+        nativeAdParentGroup: ViewGroup?
+    ) {
+        //延迟50s保证页面回调可见方法
+        activity.lifecycleScope.launch {
+            delay(50)
+            showAdvertise(activity, adType, adShowStateCallBack, layoutId, nativeAdParentGroup)
+        }
+    }
+
+    private fun showAdvertise(
+        activity: AppCompatActivity,
+        adType: String,
+        adShowStateCallBack: AdShowStateCallBack?,
+        layoutId: Int?,
+        nativeAdParentGroup: ViewGroup?
     ) {
         if (!AdUtil.activityIsResume(activity)) {//页面是否可见
             Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("AdMob----showOpenAd()---当前页面不可见，页面状态：${activity.lifecycle.currentState}")
+                .d("AdMob----showAd()---当前页面不可见，页面状态：${activity.lifecycle.currentState}")
             adShowStateCallBack?.onAdShowFail()
             return
         }
@@ -216,7 +274,7 @@ object AdMob : AbstractAd() {
         val ad = adWrap?.ad
         if (adWrap == null || ad == null) {
             Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("AdMob----showOpenAd()---no such adWrap or ad")
+                .d("AdMob----showAd()---no such adWrap or ad")
             adShowStateCallBack?.onAdShowFail()
             return
         }
@@ -229,7 +287,7 @@ object AdMob : AbstractAd() {
         }
 
         Timber.tag(ConfigurationUtil.LOG_TAG)
-            .d("AdMob----Will show ad")
+            .d("AdMob----showAd()---Will show ad")
 
         val callback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {//该回调是点击广告关闭时触发
@@ -270,12 +328,73 @@ object AdMob : AbstractAd() {
             }
 
             is NativeAd -> {
-
+                Timber.tag(ConfigurationUtil.LOG_TAG)
+                    .d("AdMob----showAd()---开始展示原生广告")
+                createNativeAdView(
+                    activity,
+                    layoutId,
+                    ad,
+                    nativeAdParentGroup,
+                    adWrap, adType
+                )
             }
             else -> {
                 Timber.tag(ConfigurationUtil.LOG_TAG)
                     .d("AdMob----showOpenAd()---no such ad:$ad")
             }
+        }
+
+    }
+
+    private fun createNativeAdView(
+        activity: AppCompatActivity,
+        layoutId: Int?,
+        nativeAd: NativeAd,
+        nativeAdParentGroup: ViewGroup?,
+        adWrap: AdWrap?,
+        adType: String
+    ) {
+        val nativeAdView =
+            layoutId?.let { activity.layoutInflater.inflate(it, null) } as NativeAdView
+        nativeAdView.run {
+            mediaView = findViewById(R.id.mv_ad)
+            val iconView: ImageView = findViewById(R.id.iv_ad_icon)
+            val tvHeadline: TextView = findViewById(R.id.tv_ad_headline)
+            val tvCallToAction: TextView = findViewById(R.id.tv_ad_call_to_action)
+            val tvAdAdvertiser: TextView = findViewById(R.id.tv_ad_advertiser)
+            nativeAd.mediaContent?.let {
+                Timber.tag(ConfigurationUtil.LOG_TAG)
+                    .d("AdMob----createNativeAdView()---mediaContent:$it")
+                mediaView?.mediaContent = it
+            }
+            tvHeadline.text = nativeAd.headline
+            tvAdAdvertiser.text = nativeAd.advertiser
+            if (nativeAd.icon == null) {
+                iconView.visibility = View.INVISIBLE
+            } else {
+                iconView.setImageDrawable(nativeAd.icon?.drawable)
+                iconView.visibility = View.VISIBLE
+            }
+            if (nativeAd.callToAction == null) {
+                tvCallToAction.visibility = View.INVISIBLE
+            } else {
+                tvCallToAction.visibility = View.VISIBLE
+                tvCallToAction.text = nativeAd.callToAction
+            }
+
+            nativeAdView.setNativeAd(nativeAd)
+            nativeAdParentGroup?.removeAllViews()
+            nativeAdParentGroup?.addView(nativeAdView)
+            activity.lifecycle.addObserver(object : LifecycleEventObserver {
+                override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                    if (event == Lifecycle.Event.ON_DESTROY) {
+                        activity.lifecycle.removeObserver(this)
+                        nativeAdView.destroy()
+                    }
+                }
+            })
+            adWrap?.ad = null
+            adWrapHashMap.remove(adType)
         }
     }
 

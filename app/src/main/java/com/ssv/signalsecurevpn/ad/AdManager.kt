@@ -1,5 +1,6 @@
 package com.ssv.signalsecurevpn.ad
 
+import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 
 object AdManager {
@@ -12,9 +13,11 @@ object AdManager {
     fun showAd(
         activity: AppCompatActivity,
         adType: String,
-        adShowStateCallBack: AdShowStateCallBack?
+        adShowStateCallBack: AdShowStateCallBack?,
+        layoutId: Int?=0,
+        nativeAdParentGroup: ViewGroup?=null
     ) {
-        abstractAd?.showAd(activity, adType, adShowStateCallBack)
+        abstractAd?.showAd(activity, adType, adShowStateCallBack,layoutId,nativeAdParentGroup)
     }
 
     fun isAdAvailable(adType: String): Boolean? {

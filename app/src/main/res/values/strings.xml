@@ -12,4 +12,5 @@
     <string name="connection_fail" translatable="false">Disconnection succeed</string>
     <string name="vpn_permission_denied" translatable="false">Insufficient permission to create the VPN service</string>
     <string name="vpn_error" translatable="false">\"Description Failed to start the background service：%s\"</string>
+    <string name="ad_title" translatable="false">AD</string>
 </resources>

@@ -48,5 +48,27 @@
       "sigvn_t": "inter",
       "sigvn_p": 2
     }
+  ],
+  "sigvn_nhome": [
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/2247696110",
+      "sigvn_s": "admob",
+      "sigvn_t": "native",
+      "sigvn_p": 3
+    },
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/2247696110",
+      "sigvn_s": "admob",
+      "sigvn_t": "native",
+      "sigvn_p": 2
+    }
+  ],
+  "sigvn_nresult": [
+    {
+      "sigvn_id": "ca-app-pub-3940256099942544/2247696110",
+      "sigvn_s": "admob",
+      "sigvn_t": "native",
+      "sigvn_p": 3
+    }
   ]
 }

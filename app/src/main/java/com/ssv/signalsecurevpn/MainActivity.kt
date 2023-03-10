@@ -7,7 +7,7 @@ import android.os.RemoteException
 import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
-import android.view.View.OnClickListener
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
@@ -51,7 +51,7 @@ import timber.log.Timber
 import java.util.*
 import kotlin.system.exitProcess
 
-class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickListener,
+class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClickListener,
     OnPreferenceDataStoreChangeListener,
     OnNavigationItemSelectedListener {
     private lateinit var nav: NavigationView
@@ -77,7 +77,9 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         }
     }
     private lateinit var timeDataCallBack: TimeDataCallBack
-    var connectionJob: Job? = null//协程
+    private var connectionJob: Job? = null//协程
+    private lateinit var nativeAdViewParentGroup: FrameLayout
+    private lateinit var ivAdBg: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,21 +92,68 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
 
     override fun onResume() {
         super.onResume()
-        if (ProjectUtil.isVpnSelectPageBack) {
-            AdManager.showAd(this@MainActivity, AdMob.AD_INTER_IB, null)
-            AdManager.loadAd(AdMob.AD_INTER_IB, null)
-            ProjectUtil.isVpnSelectPageBack = false
+        //冷启动，热启动才刷新
+        if (App.isColdLaunch || AdMob.isRefreshNativeAd) {
+            AdMob.isRefreshNativeAd=false
+            judgeNativeAdShowing()
         }
-    }
-
-
-    /*业务处理*/
-    override fun businessProcess() {
         if (App.isColdLaunch) {//冷启动显示引导页
             App.isColdLaunch = false
             ProjectUtil.isShowGuide = true
             showGuideAnimation()
         }
+    }
+
+    private fun judgeNativeAdShowing() {
+        if (AdManager.isAdAvailable(AdMob.AD_NATIVE_HOME) == true) {
+            ivAdBg.visibility = View.INVISIBLE
+            showNativeAd()
+            //展示广告后再次请求新广告缓存下来
+            loadNativeHomeAd()
+        } else {
+            ivAdBg.visibility = View.VISIBLE
+            connectionJob = lifecycleScope.launch {
+                flow<Int> {
+                    (0 until 20).forEach {
+                        delay(1000)
+                        emit(it)
+                    }
+                }.onStart {
+                    loadNativeHomeAd()
+                }.onCompletion {
+                    showNativeAd()
+                }.collect {
+                    if (AdManager.isAdAvailable(AdMob.AD_NATIVE_HOME) == true) {
+                        connectionJob?.cancel()
+                        ivAdBg.visibility = View.INVISIBLE
+                    } else {
+                        loadNativeHomeAd()
+                    }
+                }
+            }
+        }
+    }
+
+    fun showNativeAd() {
+        //展示原生广告
+        AdManager.showAd(this, AdMob.AD_NATIVE_HOME, object : AdShowStateCallBack {
+            override fun onAdDismiss() {
+
+            }
+
+            override fun onAdShowed() {
+
+            }
+
+            override fun onAdShowFail() {
+
+            }
+
+        }, R.layout.layout_native_ad_main, nativeAdViewParentGroup)
+    }
+
+    /*业务处理*/
+    override fun businessProcess() {
         if (ProjectUtil.idle) {
             TimeUtil.resetTime()
             tvConnectTime.text = TimeUtil.curConnectTime
@@ -202,7 +251,15 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
             restrictDialog()
         }
 
-//        loadInterAd()
+        loadNativeHomeAd()
+    }
+
+    private fun loadNativeResultAd() {
+        AdManager.loadAd(AdMob.AD_NATIVE_RESULT, null)
+    }
+
+    private fun loadNativeHomeAd() {
+        AdManager.loadAd(AdMob.AD_NATIVE_HOME, null)
     }
 
     private fun loadInterAd() {
@@ -315,6 +372,9 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
         lavGuide.setOnClickListener(this)
         maskView = findViewById(R.id.mask_view_main)
         cl = findViewById(R.id.cl_main)
+
+        nativeAdViewParentGroup = findViewById(R.id.nav_ad_parent_group_main)
+        ivAdBg = findViewById(R.id.iv_ad_bg_main)
     }
 
     override fun getLayout(): Int {
@@ -524,6 +584,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                             }.onCompletion {
                                 Timber.tag(ConfigurationUtil.LOG_TAG)
                                     .d("MainActivity----startConnect()---开始连接VPN")
+                                checkNativeResultAd()
                                 Core.startService()
                             }.collect {
                                 val adAvailable =
@@ -568,6 +629,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                     Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("MainActivity----stopConnect()---开始关闭VPN")
                     if (ProjectUtil.stopping) {//动画停止中，点击其他按钮后，终止VPN停止过程
+                        checkNativeResultAd()
                         Core.stopService()//停止VPN
                     }
                 }.collect {
@@ -584,6 +646,12 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                     }
                 }
             }
+        }
+    }
+
+    private fun checkNativeResultAd() {
+        if (AdManager.isAdAvailable(AdMob.AD_NATIVE_RESULT) == false) {
+            loadNativeResultAd()
         }
     }
 

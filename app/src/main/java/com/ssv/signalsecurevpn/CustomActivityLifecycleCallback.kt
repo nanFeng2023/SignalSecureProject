@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Intent
 import android.os.Bundle
+import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
 import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
@@ -51,7 +52,8 @@ object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
         finalCount--
         //finalCount==0,说明应用前台到后台
         if (finalCount == 0) {
-            Timber.tag(ConfigurationUtil.LOG_TAG).d("ColdActivityLifecycleCallback----onActivityStopped()---activity:${activity.localClassName}")
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("ColdActivityLifecycleCallback----onActivityStopped()---activity:${activity.localClassName}")
             val currentTimeMillis = System.currentTimeMillis()
             SharePreferenceUtil.putLong(ProjectUtil.SAVE_TIME_MILLIS, currentTimeMillis)
             frontAndBackgroundCallBack?.onAppToBackGround()
