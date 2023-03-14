@@ -7,11 +7,11 @@ import android.os.RemoteException
 import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
@@ -33,10 +33,10 @@ import com.google.android.material.snackbar.Snackbar
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
-import com.ssv.signalsecurevpn.bean.IpTestBean
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.call.BusinessProcessCallBack
 import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
+import com.ssv.signalsecurevpn.call.IpDelayTestCallBack
 import com.ssv.signalsecurevpn.call.TimeDataCallBack
 import com.ssv.signalsecurevpn.util.*
 import com.ssv.signalsecurevpn.widget.AlertDialogUtil
@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.system.exitProcess
 
 class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClickListener,
@@ -78,7 +79,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
     }
     private lateinit var timeDataCallBack: TimeDataCallBack
     private var connectionJob: Job? = null//协程
-    private lateinit var nativeAdViewParentGroup: FrameLayout
+    private lateinit var nativeAdViewParentGroup: CardView
     private lateinit var ivAdBg: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,68 +93,59 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
     override fun onResume() {
         super.onResume()
-        //冷启动，热启动才刷新
-        if (App.isColdLaunch || AdMob.isRefreshNativeAd) {
-            AdMob.isRefreshNativeAd=false
+        //引导页过来才刷新
+        if (AdMob.isRefreshNativeAd) {
+            AdMob.isRefreshNativeAd = false
+            Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----onResume()")
             judgeNativeAdShowing()
-        }
-        if (App.isColdLaunch) {//冷启动显示引导页
-            App.isColdLaunch = false
-            ProjectUtil.isShowGuide = true
-            showGuideAnimation()
         }
     }
 
     private fun judgeNativeAdShowing() {
         if (AdManager.isAdAvailable(AdMob.AD_NATIVE_HOME) == true) {
             ivAdBg.visibility = View.INVISIBLE
+            nativeAdViewParentGroup.visibility = View.VISIBLE
             showNativeAd()
-            //展示广告后再次请求新广告缓存下来
-            loadNativeHomeAd()
         } else {
             ivAdBg.visibility = View.VISIBLE
-            connectionJob = lifecycleScope.launch {
-                flow<Int> {
-                    (0 until 20).forEach {
-                        delay(1000)
-                        emit(it)
-                    }
-                }.onStart {
-                    loadNativeHomeAd()
-                }.onCompletion {
-                    showNativeAd()
-                }.collect {
-                    if (AdManager.isAdAvailable(AdMob.AD_NATIVE_HOME) == true) {
-                        connectionJob?.cancel()
-                        ivAdBg.visibility = View.INVISIBLE
-                    } else {
-                        loadNativeHomeAd()
-                    }
-                }
-            }
+            nativeAdViewParentGroup.visibility = View.INVISIBLE
+            loadNativeHomeAd()
         }
     }
 
-    fun showNativeAd() {
+    private fun showNativeAd() {
         //展示原生广告
-        AdManager.showAd(this, AdMob.AD_NATIVE_HOME, object : AdShowStateCallBack {
-            override fun onAdDismiss() {
+        AdManager.showAd(
+            this, AdMob.AD_NATIVE_HOME, object : AdShowStateCallBack {
+                override fun onAdDismiss() {
 
-            }
+                }
 
-            override fun onAdShowed() {
+                override fun onAdShowed() {
+                    //展示广告后再次请求新广告缓存下来
+                    loadNativeHomeAd()
+                }
 
-            }
+                override fun onAdShowFail() {
 
-            override fun onAdShowFail() {
+                }
 
-            }
+                override fun onAdClicked() {
 
-        }, R.layout.layout_native_ad_main, nativeAdViewParentGroup)
+                }
+
+            },
+            R.layout.layout_native_ad_main, nativeAdViewParentGroup
+        )
     }
 
     /*业务处理*/
     override fun businessProcess() {
+        if (App.isColdLaunch) {//冷启动显示引导页
+            App.isColdLaunch = false
+            ProjectUtil.isShowGuide = true
+            showGuideAnimation()
+        }
         if (ProjectUtil.idle) {
             TimeUtil.resetTime()
             tvConnectTime.text = TimeUtil.curConnectTime
@@ -215,11 +207,15 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         CustomActivityLifecycleCallback.frontAndBackgroundCallBack =
             object : FrontAndBackgroundCallBack {
                 override fun onAppToFront() {
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("MainActivity----onAppToFront()---回到前台")
                     ProjectUtil.appToFront = true
                     ProjectUtil.appToBackground = false
                 }
 
                 override fun onAppToBackGround() {//比如home键,关闭动画取消,关闭VPN连接
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("MainActivity----onAppToBackGround()---回到后台")
                     stopVpnConnectingAnimation()
                     stopVpnStoppingAnimation()
                     ProjectUtil.appToFront = false
@@ -250,8 +246,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         if (NetworkUtil.isRestrictArea) {
             restrictDialog()
         }
-
-        loadNativeHomeAd()
     }
 
     private fun loadNativeResultAd() {
@@ -318,7 +312,10 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
     private fun showAd(isConnected: Boolean) {
         AdManager.showAd(this@MainActivity, AdMob.AD_INTER_CLICK, object : AdShowStateCallBack {
             override fun onAdDismiss() {
-                jumpConnectResultActivity(isConnected)
+                lifecycleScope.launch {
+                    delay(40)
+                    jumpConnectResultActivity(isConnected)
+                }
                 loadInterAd()
             }
 
@@ -327,13 +324,27 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
             }
 
             override fun onAdShowFail() {
-                jumpConnectResultActivity(isConnected)
+                lifecycleScope.launch {
+                    delay(40)
+                    jumpConnectResultActivity(isConnected)
+                }
                 loadInterAd()
+            }
+
+            override fun onAdClicked() {
+
             }
         })
     }
 
     private fun jumpConnectResultActivity(isConnected: Boolean) {
+        if (!AdUtil.activityIsResume(this@MainActivity)) {
+            if (!isConnected) {//连接失败重置时间
+                TimeUtil.resetTime()
+                tvConnectTime.text = TimeUtil.curConnectTime
+            }
+            return
+        }
         val intent = Intent(this@MainActivity, VpnConnectResultActivity::class.java)
         val city = if (isConnected) {
             SharePreferenceUtil.getString(ProjectUtil.CUR_SELECT_CITY)
@@ -581,12 +592,21 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                                 lav.playAnimation()
                                 Timber.tag(ConfigurationUtil.LOG_TAG)
                                     .d("MainActivity----startConnect()---开始连接动画")
+                                //请求插屏广告
+                                loadInterAd()
+                                //请求原生结果页广告
+                                checkNativeResultAd()
                             }.onCompletion {
                                 Timber.tag(ConfigurationUtil.LOG_TAG)
                                     .d("MainActivity----startConnect()---开始连接VPN")
-                                checkNativeResultAd()
-                                Core.startService()
+                                if (ProjectUtil.connecting)
+                                    Core.startService()
                             }.collect {
+                                val overLimitDay = AdManager.isOverLimitDay()
+                                if (overLimitDay == true) {
+                                    connectionJob?.cancel()
+                                    return@collect
+                                }
                                 val adAvailable =
                                     AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) ?: false
                                 if (adAvailable) {
@@ -596,7 +616,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                                 } else {
                                     Timber.tag(ConfigurationUtil.LOG_TAG)
                                         .d("MainActivity----startConnect()---没有缓存，请求插屏广告")
-                                    loadInterAd()
                                 }
                             }
                         }
@@ -625,14 +644,24 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                     lav.playAnimation()
                     Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("MainActivity----stopConnect()---开始关闭动画")
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("MainActivity----stopConnect()---开始请求插屏动画")
+                    //请求一次插屏广告
+                    loadInterAd()
+                    //请求原生结果页广告
+                    checkNativeResultAd()
                 }.onCompletion {
                     Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("MainActivity----stopConnect()---开始关闭VPN")
                     if (ProjectUtil.stopping) {//动画停止中，点击其他按钮后，终止VPN停止过程
-                        checkNativeResultAd()
                         Core.stopService()//停止VPN
                     }
                 }.collect {
+                    val overLimitDay = AdManager.isOverLimitDay()
+                    if (overLimitDay == true) {
+                        connectionJob?.cancel()
+                        return@collect
+                    }
                     val adAvailable =
                         AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) ?: false
                     if (adAvailable) {
@@ -642,7 +671,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                     } else {
                         Timber.tag(ConfigurationUtil.LOG_TAG)
                             .d("MainActivity----stopConnect()---没有缓存，请求插屏广告")
-                        loadInterAd()
                     }
                 }
             }
@@ -740,73 +768,86 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         CallBackUtil.businessProcessCallBack = null
     }
 
-
     private lateinit var smartCityList: ArrayList<VpnBean>
-    private lateinit var ipTestCallBack: ((ip: String, ipDelayTime: Int, count: Int, listSize: Int) -> Unit)
-    private lateinit var ipTestList: ArrayList<IpTestBean>
-    private lateinit var smartCitySpeedList: ArrayList<VpnBean>
 
-    //测速
+    //smart测速
     private fun selectSmartService() {
         Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----selectSmartService()---开始测速")
         smartCityList = ArrayList()
-        ipTestList = ArrayList()
-        smartCitySpeedList = ArrayList()
-        for (i in 0 until NetworkUtil.cityList.size) {
-            val cityName: String = NetworkUtil.cityList[i]
-            for (j in 0 until NetworkUtil.serviceDataList.size) {
-                if (cityName == NetworkUtil.serviceDataList[j].city) {
-                    smartCityList.add(NetworkUtil.serviceDataList[j])
-                    break
+        if (NetworkUtil.cityList.size > 0) {//smart列表有数据
+            for (i in 0 until NetworkUtil.cityList.size) {
+                val cityName: String = NetworkUtil.cityList[i]
+                for (j in 0 until NetworkUtil.serviceDataList.size) {
+                    if (cityName == NetworkUtil.serviceDataList[j].city) {
+                        smartCityList.add(NetworkUtil.serviceDataList[j])
+                        break
+                    }
                 }
             }
         }
-        val count = 0
+
+        val smartListSize = smartCityList.size
+        if (smartListSize == 0) {//如果服务器没有配置smart列表，随机选择一个
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("MainActivity----selectSmartService()---服务器没有配置smart列表，排序选出前三再随机选择一个")
+            smartCityList.addAll(NetworkUtil.serviceDataList)
+            if (smartCityList.size > 0)//去掉第一个smart服务器占位对象
+                smartCityList.removeAt(0)
+            sortIpDelayTime()
+        } else if (smartListSize <= 3) {//如果smart服务器数量小于3,随机选择一个连接
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("MainActivity----selectSmartService()---smart服务器数量小于3,随机选择一个连接")
+            randomSelectVpnAndUpdateInfo(smartCityList)
+        } else if (smartListSize > 3) {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("MainActivity----selectSmartService()---smart服务器数量大于3,延时从小到大排序，选出三个最快的，随机选择一个连接")
+            sortIpDelayTime()
+        }
+    }
+
+    private fun sortIpDelayTime() {
+        var count = 0
         //ip测速
         for (i in 0 until smartCityList.size) {
             val vpnBean = smartCityList[i]
             val ip = vpnBean.ip
             ip?.let {
                 lifecycleScope.launch {
-                    val ipDelay = NetworkUtil.delayTest(it, 2000)
-                    ipTestCallBack.invoke(ip, ipDelay, count, smartCityList.size)
+                    NetworkUtil.delayTest(vpnBean, object : IpDelayTestCallBack {
+                        override fun onIpDelayTest(vpnBean: VpnBean, ipDelayTime: Int) {
+                            Timber.tag(ConfigurationUtil.LOG_TAG)
+                                .d("MainActivity----selectSmartService()---onIpDelayTest()---ip:${vpnBean.ip}---ip测速延时:$ipDelayTime")
+                            vpnBean.ipDelayTime = ipDelayTime
+                            count++
+                            if (count == smartCityList.size) {
+                                smartCityList.sortBy {
+                                    it.ipDelayTime
+                                }
+                                val randomVpnList: ArrayList<VpnBean> = ArrayList()
+                                for (j in 0 until 3) {
+                                    randomVpnList.add(smartCityList[j])
+                                }
+                                randomSelectVpnAndUpdateInfo(randomVpnList)
+                            }
+                        }
+                    })
                 }
             }
-        }
-        ipTestCallBack = { ip: String, delayTime: Int, countNum: Int, listSize: Int ->
-            val bean = IpTestBean()
-            bean.ip = ip
-            bean.ipDelayTime = delayTime
-            ipTestList.add(bean)
-            if (countNum == listSize) {//测速完成
-                sortIpDelay()
-            }
-        }
-        //随机选择一个
-        if (smartCityList.size > 0) {
-            val index = Random().nextInt(smartCityList.size)
-            currentVpnBean = smartCityList[index]
-            //更新profile
-            updateVpnInfo()
         }
     }
 
-    //选择排序
-    private fun sortIpDelay() {
-        for (i in 0 until ipTestList.size - 1) {
-            var minIndex = i // 用来记录最小值的索引位置，默认值为i
-            for (j in i + 1 until ipTestList.size) {
-                if (ipTestList[j].ipDelayTime!! < ipTestList[minIndex].ipDelayTime!!) {
-                    minIndex = j // 遍历 i+1~length 的值，找到其中最小值的位置
-                }
-            }
-            // 交换当前索引 i 和最小值索引 minIndex 两处的值
-            if (i != minIndex) {
-                val temp = ipTestList[i]
-                ipTestList[i] = ipTestList[minIndex]
-                ipTestList[minIndex] = temp
-            }
-            // 执行完一次循环，当前索引 i 处的值为最小值，直到循环结束即可完成排序
+    private fun randomSelectVpnAndUpdateInfo(list: ArrayList<VpnBean>) {
+        if (list.size > 0) {
+            val index = Random().nextInt(list.size)
+            currentVpnBean = list[index]
+            //更新profile
+            updateVpnInfo()
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("MainActivity----randomSelectVpnAndUpdateInfo()---选择的IP：${currentVpnBean!!.ip}")
+        } else {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("MainActivity----randomSelectVpnAndUpdateInfo()---list集合无数据")
         }
     }
+
 }

@@ -100,12 +100,17 @@ class VpnSelectActivity : BaseActivity() {
             override fun onAdShowFail() {
                 finishPageAndLoadAd()
             }
+
+            override fun onAdClicked() {
+
+            }
         })
     }
 
     private fun finishPageAndLoadAd(){
         finish()
         AdManager.loadAd(AdMob.AD_INTER_IB, null)
+        overridePendingTransition(0,0)
     }
 
 }

@@ -1,14 +1,17 @@
 package com.ssv.signalsecurevpn
 
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
+import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
 import com.ssv.signalsecurevpn.call.TimeDataCallBack
+import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import com.ssv.signalsecurevpn.util.TimeUtil
+import timber.log.Timber
 import java.util.*
 
 /*
@@ -21,9 +24,11 @@ class VpnConnectResultActivity : BaseActivity() {
     private lateinit var tvConnectState: TextView
     private lateinit var timeDataCallBack: TimeDataCallBack
     private lateinit var ivCountry: ImageView
-    private lateinit var flAdViewGroup: FrameLayout
+    private lateinit var adViewGroup: CardView
     private lateinit var ivAdBg: ImageView
     override fun businessProcess() {
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("VpnConnectResultActivity----businessProcess()")
         tvTitle.setText(R.string.result)
         val country = intent.getStringExtra(ProjectUtil.COUNTRY_KEY)
         country?.let { ivCountry.setImageResource(ProjectUtil.selectCountryIcon(it.lowercase(Locale.getDefault()))) }
@@ -48,20 +53,65 @@ class VpnConnectResultActivity : BaseActivity() {
             tvConnectState.setTextColor(getColor(R.color.connect_fail_color_result))
             tvConnectState.text = getString(R.string.connection_fail)
         }
+        showAdAndLoadAd()
+    }
+
+    private fun showAdAndLoadAd() {
         if (AdManager.isAdAvailable(AdMob.AD_NATIVE_RESULT) == true) {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("VpnConnectResultActivity----showAdAndLoadAd()---有原生广告缓存")
             ivAdBg.visibility = View.INVISIBLE
+            adViewGroup.visibility = View.VISIBLE
             //展示原生广告
-            AdManager.showAd(
-                this@VpnConnectResultActivity,
-                AdMob.AD_NATIVE_RESULT, null,
-                R.layout.layout_native_ad_connect_result,
-                flAdViewGroup
-            )
+            showNativeAd()
         } else {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("VpnConnectResultActivity----showAdAndLoadAd()---没有原生广告缓存")
             ivAdBg.visibility = View.VISIBLE
+            adViewGroup.visibility = View.INVISIBLE
+            loadNativeAd()
         }
+    }
+
+    private fun loadNativeAd() {
         //请求新广告
         AdManager.loadAd(AdMob.AD_NATIVE_RESULT, null)
+    }
+
+    private fun showNativeAd() {
+        AdManager.showAd(
+            this@VpnConnectResultActivity,
+            AdMob.AD_NATIVE_RESULT, object : AdShowStateCallBack {
+                override fun onAdDismiss() {
+
+                }
+
+                override fun onAdShowed() {
+                    loadNativeAd()
+                }
+
+                override fun onAdShowFail() {
+
+                }
+
+                override fun onAdClicked() {
+
+                }
+
+            },
+            R.layout.layout_native_ad_connect_result,
+            adViewGroup
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        //引导页过来才刷新
+        if (AdMob.isRefreshNativeAd) {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("VpnConnectResultActivity----onResume()---刷新原生广告")
+            showAdAndLoadAd()
+        }
     }
 
     override fun bindViewId() {
@@ -73,7 +123,7 @@ class VpnConnectResultActivity : BaseActivity() {
         tvConnectTime = findViewById(R.id.tv_connect_time_result)
         tvConnectState = findViewById(R.id.tv_connect_state_result)
         ivCountry = findViewById(R.id.iv_country_result)
-        flAdViewGroup = findViewById(R.id.fl_ad_view_group_connect_result)
+        adViewGroup = findViewById(R.id.cd_ad_view_group_connect_result)
         ivAdBg = findViewById(R.id.iv_ad_bg_connect_result)
     }
 

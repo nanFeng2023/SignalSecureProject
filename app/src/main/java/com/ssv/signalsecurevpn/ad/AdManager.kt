@@ -14,13 +14,17 @@ object AdManager {
         activity: AppCompatActivity,
         adType: String,
         adShowStateCallBack: AdShowStateCallBack?,
-        layoutId: Int?=0,
-        nativeAdParentGroup: ViewGroup?=null
+        layoutId: Int? = 0,
+        nativeAdParentGroup: ViewGroup? = null
     ) {
-        abstractAd?.showAd(activity, adType, adShowStateCallBack,layoutId,nativeAdParentGroup)
+        abstractAd?.showAd(activity, adType, adShowStateCallBack, layoutId, nativeAdParentGroup)
     }
 
     fun isAdAvailable(adType: String): Boolean? {
-       return abstractAd?.isAdAvailable(adType)
+        return abstractAd?.isAdAvailable(adType)
+    }
+
+    fun isOverLimitDay(): Boolean? {
+        return abstractAd?.isOverLimitDay()
     }
 }

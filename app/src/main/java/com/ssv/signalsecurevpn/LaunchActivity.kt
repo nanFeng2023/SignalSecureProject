@@ -9,6 +9,7 @@ import com.ssv.signalsecurevpn.ad.AdLoadStateCallBack
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
+import com.ssv.signalsecurevpn.util.AdUtil
 import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
@@ -38,9 +39,9 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
             canBack = false
             //限制IP判断
             NetworkUtil.detectionIp(null)
+            AdMob.isRefreshNativeAd = true
             isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
             if (isHotLaunch) {//热启动
-                AdMob.isRefreshNativeAd = true
                 if (!AdManager.isAdAvailable(AdMob.AD_OPEN)!!) {//没有缓存或过期，重新请求
                     reqAd()
                 }
@@ -52,7 +53,7 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
             progressBar.progress = it
         }, end = {
             canBack = true
-            if (AdMob.isReqInterrupt) {//广告达到日上限或广告不是来自admob
+            if (AdMob.isReqInterrupt) {//广告达到日上限
                 jumpActivity()
             } else {
                 Timber.tag(ConfigurationUtil.LOG_TAG)
@@ -72,6 +73,9 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
                         jumpActivity()
                     }
 
+                    override fun onAdClicked() {
+
+                    }
                 })
             }
         })
@@ -81,13 +85,13 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
         //请求开屏广告
         AdManager.loadAd(AdMob.AD_OPEN, this)
         //预加载插屏广告2
-        AdManager.loadAd(AdMob.AD_INTER_IB,null)
+        AdManager.loadAd(AdMob.AD_INTER_IB, null)
         //预加载插屏广告1
-        AdManager.loadAd(AdMob.AD_INTER_CLICK,null)
+        AdManager.loadAd(AdMob.AD_INTER_CLICK, null)
         //预加载原生广告home
-        AdManager.loadAd(AdMob.AD_NATIVE_HOME,null)
+        AdManager.loadAd(AdMob.AD_NATIVE_HOME, null)
         //预加载原生广告result
-        AdManager.loadAd(AdMob.AD_NATIVE_RESULT,null)
+        AdManager.loadAd(AdMob.AD_NATIVE_RESULT, null)
     }
 
     override fun bindViewId() {
@@ -138,9 +142,9 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
 
     private fun jumpActivity() {
         if (isHotLaunch) {//热启动关闭闪屏页，恢复到之前页面
-            finish()
             Timber.tag(ConfigurationUtil.LOG_TAG)
                 .d("LaunchActivity----jumpActivity()--关闭页面显示之前页面")
+            finish()
         } else {
             Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----jumpActivity()--跳转到主页")
             val intent = Intent(this, MainActivity::class.java)

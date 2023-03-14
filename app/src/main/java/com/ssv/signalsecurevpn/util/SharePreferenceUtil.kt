@@ -51,8 +51,20 @@ object SharePreferenceUtil {
         edit.apply()
     }
 
-    fun getBoolean(key: String,defValue:Boolean): Boolean {
+    fun getBoolean(key: String, defValue: Boolean): Boolean {
         val sps = getSp(context)
         return sps.getBoolean(key, defValue)
     }
+
+    fun putInt(key: String, value: Int) {
+        val edit = getSp(context).edit()
+        edit.putInt(key, value)
+        edit.apply()
+    }
+
+    fun getInt(key: String): Int {
+        val sps = getSp(context)
+        return sps.getInt(key, 0)
+    }
+
 }

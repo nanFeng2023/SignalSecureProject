@@ -15,4 +15,6 @@ abstract class AbstractAd {
     )
 
     abstract fun isAdAvailable(adType: String): Boolean
+
+    abstract fun isOverLimitDay(): Boolean
 }

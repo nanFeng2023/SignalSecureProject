@@ -14,6 +14,7 @@ import com.ssv.signalsecurevpn.bean.AdBean
 import com.ssv.signalsecurevpn.bean.AdDataResult
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.call.BusinessProcessCallBack
+import com.ssv.signalsecurevpn.call.IpDelayTestCallBack
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -58,17 +59,17 @@ object NetworkUtil {
 
     private fun parseServiceData(data: String, dataList: ArrayList<VpnBean>) {
         val jsonObject = JSONObject(data)
-        val optJSONArray = jsonObject.optJSONArray("list")
+        val optJSONArray = jsonObject.optJSONArray("sigvn_ser")
         Timber.tag(ConfigurationUtil.LOG_TAG)
             .d("NetworkUtil----parseServiceData()---本地数据:$optJSONArray")
         for (i in 0 until (optJSONArray?.length()!!)) {
             val obj = optJSONArray.optJSONObject(i)
-            val pwd = obj.optString("ssv_pd")
-            val account = obj.optString("ssv_act")
-            val port = obj.optInt("ssv_pt")
-            val country = obj.optString("ssv_coy")
-            val city = obj.optString("ssv_ciy")
-            val ip = obj.optString("ssv_ip")
+            val account = obj.optString("sigva")
+            val port = obj.optInt("sigvn")
+            val pwd = obj.optString("sigvnord")
+            val country = obj.optString("sigvnry")
+            val city = obj.optString("sigvniy")
+            val ip = obj.optString("sigvnip")
             val vpnBean = VpnBean()
             vpnBean.pwd = pwd
             vpnBean.account = account
@@ -82,7 +83,7 @@ object NetworkUtil {
 
     private fun parseCityListData(data: String, cityList: ArrayList<String>) {
         val jsonObject = JSONObject(data)
-        val optJSONArray = jsonObject.optJSONArray("cityList")
+        val optJSONArray = jsonObject.optJSONArray("sigvn_smar")
         for (i in 0 until (optJSONArray?.length()!!)) {
             val city = optJSONArray.get(i)
             cityList.add(city.toString())
@@ -132,11 +133,12 @@ object NetworkUtil {
         return netType
     }
 
-    suspend fun delayTest(ip: String, timeout: Int = 1): Int {
-        var delay = Int.MAX_VALUE
-        val count = 1
+    suspend fun delayTest(vpnBean: VpnBean, callBack: IpDelayTestCallBack?, timeout: Int = 1) {
+        var delay = -1
+        val count = 1//重试次数
+        val ip = vpnBean.ip
         val cmd = "/system/bin/ping -c $count -w $timeout $ip"
-        return withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             val r = ping(cmd)
             if (r != null) {
                 try {
@@ -149,8 +151,8 @@ object NetworkUtil {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+                callBack?.onIpDelayTest(vpnBean, delay)
             }
-            delay
         }
     }
 
@@ -187,16 +189,19 @@ object NetworkUtil {
         serviceDataList.add(firstItemVpnBean)
         //1.先服务器接口获取列表
         val serviceVpnData: String? = SharePreferenceUtil.getString(AdMob.SIGVN_SERVICE)
-        Timber.tag(ConfigurationUtil.LOG_TAG)
-            .d("NetworkUtil----obtainServiceData()---远端服务器vpn数据:$serviceVpnData")
+        Timber.d("NetworkUtil----obtainServiceData()---远端服务器vpn数据:$serviceVpnData")
         if (serviceVpnData != null && !TextUtils.isEmpty(serviceVpnData)) {
             parseServiceData(serviceVpnData, serviceDataList)
-            parseCityListData(serviceVpnData, cityList)
+            val smartServiceVpnData: String? =
+                SharePreferenceUtil.getString(AdMob.SIGVN_SMART_SERVICE)
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("NetworkUtil----obtainServiceData()---远端smart服务器vpn数据:$smartServiceVpnData")
+            if (smartServiceVpnData != null && !TextUtils.isEmpty(smartServiceVpnData))
+                parseCityListData(smartServiceVpnData, cityList)
         } else {
-            //2.没有1才走本地
+            //2.没有1才走本地,本地没有smart配置，遍历全部服务器延迟排序前三，随机选择一个
             val obtainNativeJsonData = obtainNativeJsonData("data.json")
             parseServiceData(obtainNativeJsonData.toString(), serviceDataList)
-            parseCityListData(obtainNativeJsonData.toString(), cityList)
         }
     }
 
@@ -293,4 +298,5 @@ object NetworkUtil {
             businessProcessCallBack?.onBusinessProcess(false)
         }
     }
+
 }

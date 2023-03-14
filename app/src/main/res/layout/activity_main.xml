@@ -104,14 +104,16 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/iv_connect_progress_state_main" />
 
-            <FrameLayout
+            <androidx.cardview.widget.CardView
                 android:id="@+id/nav_ad_parent_group_main"
                 android:layout_width="match_parent"
                 android:layout_height="152dp"
                 android:layout_marginStart="12dp"
                 android:layout_marginTop="30dp"
                 android:layout_marginEnd="12dp"
-                android:background="@drawable/shape_viewgroup_ad_main"
+                android:visibility="invisible"
+                app:cardBackgroundColor="@color/background_color_setting"
+                app:cardCornerRadius="8dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/iv_connect_progress_state_main" />
@@ -121,10 +123,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="152dp"
                 android:layout_marginStart="12dp"
-                android:scaleType="fitXY"
                 android:layout_marginTop="30dp"
                 android:layout_marginEnd="12dp"
+                android:scaleType="fitXY"
                 android:src="@mipmap/ic_ad_main"
+                android:visibility="visible"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/iv_connect_progress_state_main" />

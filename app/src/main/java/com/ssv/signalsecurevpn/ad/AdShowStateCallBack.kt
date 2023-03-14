@@ -4,4 +4,5 @@ interface AdShowStateCallBack {
     fun onAdDismiss()
     fun onAdShowed()
     fun onAdShowFail()
+    fun onAdClicked()
 }
