@@ -9,7 +9,6 @@ import com.ssv.signalsecurevpn.ad.AdLoadStateCallBack
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
-import com.ssv.signalsecurevpn.util.AdUtil
 import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil

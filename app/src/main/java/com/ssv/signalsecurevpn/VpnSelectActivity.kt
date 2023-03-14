@@ -3,7 +3,6 @@ package com.ssv.signalsecurevpn
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.view.KeyEvent
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -11,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
-import com.ssv.signalsecurevpn.util.CallBackUtil
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import com.ssv.signalsecurevpn.util.SharePreferenceUtil

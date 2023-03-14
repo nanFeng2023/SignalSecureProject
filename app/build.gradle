@@ -34,9 +34,6 @@ android {
     }
 }
 
-//setupApp()
-
-
 dependencies {
     implementation project(":core")
 
