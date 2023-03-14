@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <application
-        android:name=".App"
+        android:name="com.ssv.signalsecurevpn.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -20,7 +20,7 @@
         tools:targetApi="31">
         <!--android:sharedUserId="android.uid.system"   解决java.lang.SecurityException: Package android does not belong to 10253报错-->
         <activity
-            android:name=".PrivacyPolicyActivity"
+            android:name="com.ssv.signalsecurevpn.PrivacyPolicyActivity"
             android:exported="false" />
         <!-- facebook配置 -->
         <meta-data
@@ -32,15 +32,15 @@
             android:value="@string/google_ad_id" />
 
         <activity
-            android:name=".VpnConnectResultActivity"
+            android:name="com.ssv.signalsecurevpn.VpnConnectResultActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".VpnSelectActivity"
+            android:name="com.ssv.signalsecurevpn.VpnSelectActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".LaunchActivity"
+            android:name="com.ssv.signalsecurevpn.LaunchActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait">
@@ -51,7 +51,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="com.ssv.signalsecurevpn.MainActivity"
             android:exported="false"
             android:launchMode="singleTask"
             android:screenOrientation="portrait" />
