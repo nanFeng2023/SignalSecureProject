@@ -717,7 +717,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                 }
             }
         }
-        var count = 0
+        val count = 0
         //ip测速
         for (i in 0 until smartCityList.size) {
             val vpnBean = smartCityList[i]
