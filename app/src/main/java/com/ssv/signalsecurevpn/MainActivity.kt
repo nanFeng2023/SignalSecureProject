@@ -36,6 +36,7 @@ import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.callback.StringCallback
 import com.lzy.okgo.model.Response
+import com.secure.fast.signalvpn.R
 import com.ssv.signalsecurevpn.bean.IpTestBean
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
@@ -762,9 +763,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, OnClickList
                 ipTestList[minIndex] = temp
             }
             // 执行完一次循环，当前索引 i 处的值为最小值，直到循环结束即可完成排序
-        }
-        for (i in ipTestList.indices) {
-            Log.e("TAG", "i：" + ipTestList[i])
         }
     }
 }

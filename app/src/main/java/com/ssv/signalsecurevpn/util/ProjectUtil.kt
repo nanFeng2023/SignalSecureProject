@@ -13,7 +13,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
-import com.ssv.signalsecurevpn.R
+import com.secure.fast.signalvpn.R
 
 /*帮助类*/
 object ProjectUtil {

@@ -10,6 +10,7 @@ import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.callback.StringCallback
 import com.lzy.okgo.model.Response
+import com.secure.fast.signalvpn.R
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import kotlinx.coroutines.CoroutineScope

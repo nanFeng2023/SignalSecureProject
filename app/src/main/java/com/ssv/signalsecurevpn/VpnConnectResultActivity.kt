@@ -2,6 +2,7 @@ package com.ssv.signalsecurevpn
 
 import android.widget.ImageView
 import android.widget.TextView
+import com.secure.fast.signalvpn.R
 import com.ssv.signalsecurevpn.call.TimeDataCallBack
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import com.ssv.signalsecurevpn.util.TimeUtil

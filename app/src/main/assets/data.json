@@ -1,24 +1,24 @@
 {
   "list": [
     {
-      "ssv_pd": "u1rRWTssNv0p11",
-      "ssv_act": "aes-256-cfb",
-      "ssv_pt": 1000,
-      "ssv_coy": "United States",
-      "ssv_ciy": "new york",
-      "ssv_ip": "39.156.66.10"
+      "ssv_pd": "e.P4KfomldAI0VWx",
+      "ssv_act": "chacha20-ietf-poly1305",
+      "ssv_pt": 3691,
+      "ssv_coy": "Germany",
+      "ssv_ciy": "Dusseldorf",
+      "ssv_ip": "161.97.170.219"
     },
     {
-      "ssv_pd": "u1rRWTssNv0p22",
-      "ssv_act": "aes-256-cfb",
-      "ssv_pt": 2000,
-      "ssv_coy": "Canada",
-      "ssv_ciy": "ottawa",
-      "ssv_ip": "118.116.2.140"
+      "ssv_pd": "e.P4KfomldAI0VWx",
+      "ssv_act": "chacha20-ietf-poly1305",
+      "ssv_pt": 3691,
+      "ssv_coy": "United Kingdom",
+      "ssv_ciy": "Portsmouth",
+      "ssv_ip": "149.102.145.188"
     }
   ],
   "cityList": [
-    "ottawa",
-    "canberra"
+    "Portsmouth",
+    "Dusseldorf"
   ]
 }
