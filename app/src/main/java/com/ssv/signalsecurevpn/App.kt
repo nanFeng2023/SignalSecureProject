@@ -8,6 +8,8 @@ import android.content.res.Configuration
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.github.shadowsocks.Core
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.ktx.initialize
 import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheEntity
 import com.lzy.okgo.cache.CacheMode
@@ -33,6 +35,7 @@ class App : Application(){
         Core.init(this, MainActivity::class)
         if (isMainProcess()) {
             Log.i("main", "App---onCreate---isMainProcess")
+            Firebase.initialize(this)
             AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
             //初始化okGo
             initReadyOkGo()

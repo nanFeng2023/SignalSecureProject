@@ -5,6 +5,7 @@ import android.graphics.PorterDuff
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ImageView
+import com.secure.fast.signalvpn.R
 import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
 

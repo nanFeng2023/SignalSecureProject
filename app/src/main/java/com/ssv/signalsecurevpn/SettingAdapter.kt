@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.secure.fast.signalvpn.R
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.util.ProjectUtil
 
