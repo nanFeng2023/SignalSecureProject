@@ -7,8 +7,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.ssv.signalsecurevpn.ad.AdManager
+import com.ssv.signalsecurevpn.ad.AdMob
+import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.util.SharePreferenceUtil
 import com.ssv.signalsecurevpn.widget.AlertDialogUtil
 
 /*
@@ -37,8 +41,10 @@ class VpnSelectActivity : BaseActivity() {
         tvTitle.setText(R.string.setting_location)
 
         ivBack.setOnClickListener {
-            finish()
+            onBackPressed()
         }
+        //请求插屏广告
+        AdManager.loadAd(AdMob.AD_INTER_IB, null)
     }
 
     override fun getLayout(): Int {
@@ -48,15 +54,18 @@ class VpnSelectActivity : BaseActivity() {
     @SuppressLint("NotifyDataSetChanged")
     private fun setResultForActivity(position: Int) {
         //上次选中的城市
-        val lastSelectCity = SharePreferenceUtil.getShareString(ProjectUtil.CUR_SELECT_CITY)
-        SharePreferenceUtil.putShareString(ProjectUtil.LAST_SELECT_CITY, lastSelectCity)
+        val lastSelectCity = SharePreferenceUtil.getString(ProjectUtil.CUR_SELECT_CITY)
+        SharePreferenceUtil.putString(ProjectUtil.LAST_SELECT_CITY, lastSelectCity)
         //保存选中的VPN 格式：国家-城市
-        SharePreferenceUtil.putShareString(ProjectUtil.CUR_SELECT_CITY, NetworkUtil.serviceDataList[position].getName())
+        SharePreferenceUtil.putString(
+            ProjectUtil.CUR_SELECT_CITY,
+            NetworkUtil.serviceDataList[position].getName()
+        )
 
         //页面回传值
         val intent = Intent()
         val bundle = Bundle()
-        bundle.putInt(ProjectUtil.CUR_SELECT_SERVICE_POSITION,position)
+        bundle.putInt(ProjectUtil.CUR_SELECT_SERVICE_POSITION, position)
         intent.putExtras(bundle)
         setResult(RESULT_OK, intent)
         finish()
@@ -75,4 +84,31 @@ class VpnSelectActivity : BaseActivity() {
             setResultForActivity(position)
         }
     }
+
+    override fun onBackPressed() {
+        AdManager.showAd(this@VpnSelectActivity, AdMob.AD_INTER_IB,object :AdShowStateCallBack{
+            override fun onAdDismiss() {
+                finishPageAndLoadAd()
+            }
+
+            override fun onAdShowed() {
+
+            }
+
+            override fun onAdShowFail() {
+                finishPageAndLoadAd()
+            }
+
+            override fun onAdClicked() {
+
+            }
+        })
+    }
+
+    private fun finishPageAndLoadAd(){
+        finish()
+        AdManager.loadAd(AdMob.AD_INTER_IB, null)
+        overridePendingTransition(0,0)
+    }
+
 }

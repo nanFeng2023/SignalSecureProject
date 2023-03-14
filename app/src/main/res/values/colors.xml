@@ -13,4 +13,7 @@
     <color name="connect_time_color_main">#333333</color>
     <color name="progress_bar_progress_color_launch">#F9946B</color>
     <color name="progress_bar_background_color_launch">#26000000</color>
+    <color name="ad_install_background_color">#191A1E</color>
+    <color name="ad_headline_color_result">#FF192340</color>
+    <color name="ad_description_color_result">#FF192340</color>
 </resources>

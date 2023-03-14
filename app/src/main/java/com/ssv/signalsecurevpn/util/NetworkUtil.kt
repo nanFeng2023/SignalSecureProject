@@ -3,31 +3,48 @@ package com.ssv.signalsecurevpn.util
 import android.content.Context
 import android.net.ConnectivityManager
 import android.telephony.TelephonyManager
-import android.util.Log
+import android.text.TextUtils
+import com.lzy.okgo.OkGo
+import com.lzy.okgo.cache.CacheMode
+import com.lzy.okgo.callback.StringCallback
+import com.lzy.okgo.model.Response
+import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.App
+import com.ssv.signalsecurevpn.bean.AdBean
+import com.ssv.signalsecurevpn.bean.AdDataResult
 import com.ssv.signalsecurevpn.bean.VpnBean
+import com.ssv.signalsecurevpn.call.BusinessProcessCallBack
+import com.ssv.signalsecurevpn.call.IpDelayTestCallBack
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
-import java.net.InetAddress
-import java.net.NetworkInterface
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 object NetworkUtil {
-    const val BASE_URL = "https://ipinfo.io/json"
-    const val COUNTRY_HK = "HK"//HongKong 香港
-    const val COUNTRY_CN = "CN"//China 大陆
-    const val COUNTRY_IRAN = "Iran"//伊朗
-    const val COUNTRY_MACAU = "Macau" //澳门
+    private const val BASE_URL = "https://ipinfo.io/json"
+    private const val COUNTRY_HK = "HK"//HongKong 香港
+    private const val COUNTRY_CN = "CN"//China 大陆 //todo 正是包时候记得打开
+    private const val COUNTRY_IRAN = "Iran"//伊朗
+    private const val COUNTRY_MACAU = "Macau" //澳门
 
-    fun obtainNativeJsonData(): StringBuilder {
+    //smart
+    lateinit var cityList: ArrayList<String>
+    lateinit var serviceDataList: ArrayList<VpnBean>
+
+    var adDataResult: AdDataResult? = null
+    var isRestrictArea = false//是否是限制地区
+
+    private fun obtainNativeJsonData(jsonDataName: String): StringBuilder {
         val assetManager = App.appContext.assets
-        val inputStreamReader = InputStreamReader(assetManager.open("data.json"), "UTF-8")
+        val inputStreamReader = InputStreamReader(assetManager.open(jsonDataName), "UTF-8")
         val bufferedReader = BufferedReader(inputStreamReader)
         val stringBuilder = StringBuilder()
         val iterator = bufferedReader.lineSequence().iterator()
@@ -40,32 +57,33 @@ object NetworkUtil {
         return stringBuilder
     }
 
-    fun parseData(data: String, dataList: ArrayList<VpnBean>) {
+    private fun parseServiceData(data: String, dataList: ArrayList<VpnBean>) {
         val jsonObject = JSONObject(data)
-        val optJSONArray = jsonObject.optJSONArray("list")
-        Log.i("NetworkUtil--parseData", "data:$optJSONArray")
+        val optJSONArray = jsonObject.optJSONArray("sigvn_ser")
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("NetworkUtil----parseServiceData()---本地数据:$optJSONArray")
         for (i in 0 until (optJSONArray?.length()!!)) {
             val obj = optJSONArray.optJSONObject(i)
-            val pwd = obj.optString("ssv_pd")
-            val account = obj.optString("ssv_act")
-            val port = obj.optInt("ssv_pt")
-            val country = obj.optString("ssv_coy")
-            val city = obj.optString("ssv_ciy")
-            val ip = obj.optString("ssv_ip")
+            val account = obj.optString("sigva")
+            val port = obj.optInt("sigvn")
+            val pwd = obj.optString("sigvnord")
+            val country = obj.optString("sigvnry")
+            val city = obj.optString("sigvniy")
+            val ip = obj.optString("sigvnip")
             val vpnBean = VpnBean()
             vpnBean.pwd = pwd
             vpnBean.account = account
             vpnBean.port = port
-            vpnBean.country = country.lowercase(Locale.getDefault())
-            vpnBean.city = city.lowercase(Locale.getDefault())
+            vpnBean.country = country
+            vpnBean.city = city
             vpnBean.ip = ip
             dataList.add(vpnBean)
         }
     }
 
-    fun parseCityListData(data: String, cityList: ArrayList<String>) {
+    private fun parseCityListData(data: String, cityList: ArrayList<String>) {
         val jsonObject = JSONObject(data)
-        val optJSONArray = jsonObject.optJSONArray("cityList")
+        val optJSONArray = jsonObject.optJSONArray("sigvn_smar")
         for (i in 0 until (optJSONArray?.length()!!)) {
             val city = optJSONArray.get(i)
             cityList.add(city.toString())
@@ -115,33 +133,12 @@ object NetworkUtil {
         return netType
     }
 
-    /**
-     * 获得本机ip地址
-     */
-    fun GetHostIp(): String? {
-        try {
-            val en: Enumeration<NetworkInterface> = NetworkInterface.getNetworkInterfaces()
-            while (en.hasMoreElements()) {
-                val intf: NetworkInterface = en.nextElement()
-                val ipAddr: Enumeration<InetAddress> = intf.getInetAddresses()
-                while (ipAddr.hasMoreElements()) {
-                    val inetAddress: InetAddress = ipAddr.nextElement()
-                    if (!inetAddress.isLoopbackAddress()) {
-                        return inetAddress.getHostAddress()
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return null
-    }
-
-    suspend fun delayTest(ip: String, timeout: Int = 1): Int {
-        var delay = Int.MAX_VALUE
-        val count = 1
+    suspend fun delayTest(vpnBean: VpnBean, callBack: IpDelayTestCallBack?, timeout: Int = 1) {
+        var delay = -1
+        val count = 1//重试次数
+        val ip = vpnBean.ip
         val cmd = "/system/bin/ping -c $count -w $timeout $ip"
-        return withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             val r = ping(cmd)
             if (r != null) {
                 try {
@@ -154,8 +151,8 @@ object NetworkUtil {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+                callBack?.onIpDelayTest(vpnBean, delay)
             }
-            delay
         }
     }
 
@@ -183,10 +180,6 @@ object NetworkUtil {
         return null
     }
 
-    //smart
-    lateinit var cityList: ArrayList<String>
-    lateinit var serviceDataList: ArrayList<VpnBean>
-
     fun obtainServiceData() {
         cityList = ArrayList()
         serviceDataList = ArrayList()
@@ -195,11 +188,115 @@ object NetworkUtil {
         firstItemVpnBean.country = ProjectUtil.DEFAULT_FAST_SERVERS
         serviceDataList.add(firstItemVpnBean)
         //1.先服务器接口获取列表
+        val serviceVpnData: String? = SharePreferenceUtil.getString(AdMob.SIGVN_SERVICE)
+        Timber.d("NetworkUtil----obtainServiceData()---远端服务器vpn数据:$serviceVpnData")
+        if (serviceVpnData != null && !TextUtils.isEmpty(serviceVpnData)) {
+            parseServiceData(serviceVpnData, serviceDataList)
+            val smartServiceVpnData: String? =
+                SharePreferenceUtil.getString(AdMob.SIGVN_SMART_SERVICE)
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("NetworkUtil----obtainServiceData()---远端smart服务器vpn数据:$smartServiceVpnData")
+            if (smartServiceVpnData != null && !TextUtils.isEmpty(smartServiceVpnData))
+                parseCityListData(smartServiceVpnData, cityList)
+        } else {
+            //2.没有1才走本地,本地没有smart配置，遍历全部服务器延迟排序前三，随机选择一个
+            val obtainNativeJsonData = obtainNativeJsonData("data.json")
+            parseServiceData(obtainNativeJsonData.toString(), serviceDataList)
+        }
+    }
 
-        //2.没有1才走本地
-        val obtainNativeJsonData = obtainNativeJsonData()
-        parseData(obtainNativeJsonData.toString(), serviceDataList)
-        parseCityListData(obtainNativeJsonData.toString(), cityList)
+    fun obtainAdData() {
+        val adData: String? = SharePreferenceUtil.getString(AdMob.SIGVN_AD)
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("NetworkUtil----obtainAdData()---远端广告数据:$adData")
+        adDataResult = if (!TextUtils.isEmpty(adData)) {
+            adData?.let { parseAdData(it) }
+        } else {
+            //2.没有1才本地
+            val obtainNativeJsonData = obtainNativeJsonData("ad.json")
+            parseAdData(obtainNativeJsonData.toString())
+        }
+    }
+
+    private fun parseAdData(data: String): AdDataResult {
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("NetworkUtil----parseAdData()---data:$data")
+        val jsonObject = JSONObject(data)
+        val adDataResult = AdDataResult()
+        val ssv_show_upper_limit = jsonObject.optInt("sigvns")
+        adDataResult.ssv_show_upper_limit = ssv_show_upper_limit
+        val ssv_click_upper_limit = jsonObject.optInt("sigvnc")
+        adDataResult.ssv_click_upper_limit = ssv_click_upper_limit
+        val ad_open_on = parseAdData(jsonObject.optJSONArray("sigvn_on") as JSONArray)
+        adDataResult.ssv_ad_open_on = ad_open_on
+        val ad_native_home = jsonObject.optJSONArray("sigvn_nhome")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_native_home = ad_native_home
+        val ad_native_result = jsonObject.optJSONArray("sigvn_nresult")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_native_result = ad_native_result
+        val ad_inter_click = jsonObject.optJSONArray("sigvn_click")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_inter_click = ad_inter_click
+        val ad_inter_ib = jsonObject.optJSONArray("sigvn_ib")?.let { parseAdData(it) }
+        adDataResult.ssv_ad_inter_ib = ad_inter_ib
+        return adDataResult
+    }
+
+    private fun parseAdData(optJSONArray: JSONArray): ArrayList<AdBean> {
+        val adBeanList: ArrayList<AdBean> = ArrayList()
+        for (i in 0 until (optJSONArray.length())) {
+            val obj = optJSONArray.optJSONObject(i)
+            val sigvn_id = obj.optString("sigvn_id")
+            val sigvn_s = obj.optString("sigvn_s")
+            val sigvn_t = obj.optString("sigvn_t")
+            val sigvn_p = obj.optInt("sigvn_p")
+            val adBean = AdBean()
+            adBean.ssv_id = sigvn_id
+            adBean.ssv_source = sigvn_s
+            adBean.ssv_type = sigvn_t
+            adBean.ssv_priority = sigvn_p
+            adBeanList.add(adBean)
+        }
+        return adBeanList
+    }
+
+    /*检测IP为主，地区限制为辅*/
+    fun detectionIp(businessProcessCallBack: BusinessProcessCallBack?) {
+        isRestrictArea = false
+        OkGo.get<String>(BASE_URL)
+            .tag(this)
+            .cacheMode(CacheMode.NO_CACHE)
+            .execute(object : StringCallback() {
+                override fun onSuccess(response: Response<String>?) {
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("NetworkUtil----detectionIp()---onSuccess()")
+                    response?.let {
+                        try {
+                            val jsonObj = JSONObject(it.body())
+                            val country = jsonObj.opt("country")?.toString()
+                            country?.let { it1 -> restrictArea(it1, businessProcessCallBack) }
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+
+                override fun onError(response: Response<String>?) {
+                    super.onError(response)
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("NetworkUtil----detectionIp()---onError()---error:$response")
+                    val country = Locale.getDefault().country
+                    restrictArea(country, businessProcessCallBack)
+                }
+            })
+    }
+
+    private fun restrictArea(country: String, businessProcessCallBack: BusinessProcessCallBack?) {
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("NetworkUtil----restrictArea()---当前国家:$country")
+        isRestrictArea =
+            (COUNTRY_HK == country/*|| COUNTRY_CN == country*/ || COUNTRY_MACAU == country || COUNTRY_IRAN == country)
+        if (isRestrictArea) {
+            businessProcessCallBack?.onBusinessProcess(true)
+        } else {
+            businessProcessCallBack?.onBusinessProcess(false)
+        }
     }
 
 }

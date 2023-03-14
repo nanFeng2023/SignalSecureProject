@@ -11,7 +11,7 @@ class VpnBean() : Parcelable {
     var port: Int = 0
     var city: String? = null
     var ip: String? = null
-
+    var ipDelayTime: Int? = 0
 
     fun getName(): String? {
         var name: String? = null

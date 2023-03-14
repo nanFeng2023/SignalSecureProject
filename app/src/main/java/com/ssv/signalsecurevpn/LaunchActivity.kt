@@ -2,31 +2,30 @@ package com.ssv.signalsecurevpn
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
-import android.util.Log
 import android.view.KeyEvent
 import android.widget.ProgressBar
 import androidx.lifecycle.lifecycleScope
-import com.lzy.okgo.OkGo
-import com.lzy.okgo.cache.CacheMode
-import com.lzy.okgo.callback.StringCallback
-import com.lzy.okgo.model.Response
+import com.ssv.signalsecurevpn.ad.AdLoadStateCallBack
+import com.ssv.signalsecurevpn.ad.AdManager
+import com.ssv.signalsecurevpn.ad.AdMob
+import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
+import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.json.JSONException
-import org.json.JSONObject
+import timber.log.Timber
 
 /*
 * 启动页面
 */
-class LaunchActivity : BaseActivity() {
+class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
     private lateinit var progressBar: ProgressBar
     private var canBack = true
-    private var isRestrictCountry = false
-
+    private var delayIntervalTime = 100L;//延时间隔时间  默认10s
+    private var isHotLaunch = false
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         //设置singleTask后 需要重新设置新的intent数据才生效
@@ -34,21 +33,64 @@ class LaunchActivity : BaseActivity() {
     }
 
     override fun businessProcess() {
-        Log.i("main", "LaunchActivity---onCreate")
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----businessProcess()")
         countDown(100, start = {
             canBack = false
-//            detectionIp()//限制IP判断
+            //限制IP判断
+            NetworkUtil.detectionIp(null)
+            AdMob.isRefreshNativeAd = true
+            isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
+            if (isHotLaunch) {//热启动
+                if (!AdManager.isAdAvailable(AdMob.AD_OPEN)!!) {//没有缓存或过期，重新请求
+                    reqAd()
+                }
+            } else {//冷启动
+                reqAd()
+            }
         }, next = {
+            //更新进度条
             progressBar.progress = it
         }, end = {
-            val isHotLaunch = intent.getBooleanExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, false)
             canBack = true
-            if (isHotLaunch) {//热启动关闭闪屏页，恢复到之前页面
-                finish()
-                return@countDown
+            if (AdMob.isReqInterrupt) {//广告达到日上限
+                jumpActivity()
+            } else {
+                Timber.tag(ConfigurationUtil.LOG_TAG)
+                    .d("LaunchActivity----动画加载完成,即将加载广告")
+                AdManager.showAd(this@LaunchActivity, AdMob.AD_OPEN, object : AdShowStateCallBack {
+                    override fun onAdDismiss() {
+                        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdDismiss()")
+                        jumpActivity()
+                    }
+
+                    override fun onAdShowed() {
+
+                    }
+
+                    override fun onAdShowFail() {
+                        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdShowFail()")
+                        jumpActivity()
+                    }
+
+                    override fun onAdClicked() {
+
+                    }
+                })
             }
-            jumpActivity()
         })
+    }
+
+    private fun reqAd() {
+        //请求开屏广告
+        AdManager.loadAd(AdMob.AD_OPEN, this)
+        //预加载插屏广告2
+        AdManager.loadAd(AdMob.AD_INTER_IB, null)
+        //预加载插屏广告1
+        AdManager.loadAd(AdMob.AD_INTER_CLICK, null)
+        //预加载原生广告home
+        AdManager.loadAd(AdMob.AD_NATIVE_HOME, null)
+        //预加载原生广告result
+        AdManager.loadAd(AdMob.AD_NATIVE_RESULT, null)
     }
 
     override fun bindViewId() {
@@ -60,30 +102,12 @@ class LaunchActivity : BaseActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {//屏蔽返回键
-            return canBack
+        if (keyCode == KeyEvent.KEYCODE_BACK && canBack) {//屏蔽返回键
+            return super.onKeyDown(keyCode, event)
         }
-        return super.onKeyDown(keyCode, event)
+        return true
     }
 
-    /*检测IP*/
-    private fun detectionIp() {
-        OkGo.get<String>(NetworkUtil.BASE_URL)
-            .tag(this)
-            .cacheMode(CacheMode.NO_CACHE)
-            .execute(object : StringCallback() {
-                override fun onSuccess(response: Response<String>?) {
-//                    response?.let { Log.i("TAG:onSuccess", it.body()) }
-                    Log.i("TAG", "success")
-                    response?.let { parseData(it.body()) }
-                }
-
-                override fun onError(response: Response<String>?) {
-                    super.onError(response)
-                    Log.i("TAG", "error")
-                }
-            })
-    }
 
     //协程
     private fun AppCompatActivity.countDown(
@@ -95,7 +119,7 @@ class LaunchActivity : BaseActivity() {
         lifecycleScope.launch {
             flow {
                 (time downTo 0).forEach {
-                    delay(20)
+                    delay(delayIntervalTime)
                     emit(it)
                 }
             }.onStart {
@@ -106,7 +130,8 @@ class LaunchActivity : BaseActivity() {
                 end()
             }.catch {
                 //错误
-                Log.e("TAG", it.message ?: "协程倒计时错误")
+                Timber.tag(ConfigurationUtil.LOG_TAG)
+                    .e("LaunchActivity----countDown()--协程倒计时错误:${it.message} ")
             }.collect {
                 //更新ui
                 next(time - it)
@@ -115,21 +140,25 @@ class LaunchActivity : BaseActivity() {
     }
 
     private fun jumpActivity() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("isRestrictCountry", isRestrictCountry)
-        startActivity(intent)
-        finish()
+        if (isHotLaunch) {//热启动关闭闪屏页，恢复到之前页面
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("LaunchActivity----jumpActivity()--关闭页面显示之前页面")
+            finish()
+        } else {
+            Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----jumpActivity()--跳转到主页")
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
     }
 
-    private fun parseData(data: String) {
-        var jsonObj: JSONObject? = null
-        try {
-            jsonObj = JSONObject(data)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-        val country = jsonObj?.opt("country")
-        Log.i("TAG", "country:$country")
-        isRestrictCountry = "HK" == country
+    override fun onAdLoaded() {
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoaded()")
+        delayIntervalTime = 10L
+    }
+
+    override fun onAdLoadFail() {
+        Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoadFail()")
+        jumpActivity()
     }
 }

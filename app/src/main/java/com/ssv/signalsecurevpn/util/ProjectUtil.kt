@@ -5,20 +5,22 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Rect
+import android.net.ParseException
 import android.net.Uri
-import android.os.Build
 import android.os.Parcelable
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
 import com.ssv.signalsecurevpn.R
+import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 /*帮助类*/
 object ProjectUtil {
     //常量传值key
-    const val TRANSFER_KEY = "vpnBean"
     const val CUR_SELECT_CITY = "curSelectCity"
     const val SAVE_TIME_MILLIS = "saveTimeMillis"
     const val IS_HOT_LAUNCH_KEY = "isHotLaunch"
@@ -27,6 +29,10 @@ object ProjectUtil {
     const val IS_FIRST_INTO_APP = "isFirstIntoApp"
     const val CUR_SELECT_SERVICE_POSITION = "curSelectServicePosition"
     const val LAST_SELECT_CITY = "lastSelectCity"
+    const val AD_CLICK_NUM = "adClickNum"
+    const val AD_SHOW_NUM = "adShowNum"
+    const val LAST_AD_CLICK_TIME = "lastAdClickTime"
+    const val LAST_AD_SHOW_TIME = "lastAdShowTime"
 
     //------以下标志控制动画的状态，不用VPN返回状态是因为动画要延时2s后才去请求VPN-----------
     //vpn未连接
@@ -62,7 +68,7 @@ object ProjectUtil {
 
     //国家icon资源选择
     fun selectCountryIcon(countryName: String): Int {
-        val countryIconResourceId = when (countryName) {
+        val countryIconResourceId = when (countryName.lowercase()) {
             DEFAULT_FAST_SERVERS -> R.mipmap.ic_default_country
             "united states" -> R.mipmap.ic_united_states
             "canada" -> R.mipmap.ic_canada
@@ -169,17 +175,6 @@ object ProjectUtil {
     }
 
 
-    /**
-     * 获取手机厂商
-     *
-     * @return 手机厂商
-     */
-    fun getDeviceBrand(): String? {
-        Log.e("--获取手机厂商--:", Build.BRAND)
-        return Build.BRAND
-    }
-
-
     fun setStateBarColor(activity: Activity) {
         val decorView: View = activity.window.decorView
         decorView.post {
@@ -189,8 +184,6 @@ object ProjectUtil {
             decorView.getWindowVisibleDisplayFrame(rect)
             decorView.isDrawingCacheEnabled = true
             decorView.buildDrawingCache()
-            if (rect.width() <= 0 || rect.top <= 0)//防止黑屏时候空指针
-                return@post
             val bitmap: Bitmap = Bitmap.createBitmap(
                 decorView.drawingCache, 0, 0, rect.width(), rect.top
             )
@@ -236,9 +229,63 @@ object ProjectUtil {
     }
 
     fun splitStrGetCountryName(city: String?): String {
-        Log.i("TAG", "splitStrGetCountryName（）----上次选中的国家:$city")
         return city?.split("-")?.get(0) ?: DEFAULT_FAST_SERVERS
     }
 
 
+    fun longToYMDHMS(long: Long): String {
+        val date = Date(long)
+        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        return simpleDateFormat.format(date)
+    }
+
+    /**
+     * 判断给定字符串时间是否为今日
+     * @param date
+     * @return boolean
+     */
+    fun isToday(date: String?): Boolean {
+        var isToday = false
+        val time: Date? = toDate(date)
+        val today = Date()
+        if (time != null) {
+            val nowDate: String = dateFormat2.get()?.format(today) ?: ""
+            val timeDate: String = dateFormat2.get()?.format(time) ?: ""
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("ProjectUtil----isToday()---nowDate:$nowDate---timeDate:$timeDate")
+            if (nowDate == timeDate) {
+                isToday = true
+            }
+        }
+        Timber.tag(ConfigurationUtil.LOG_TAG)
+            .d("ProjectUtil----isToday()---isToday:$isToday")
+        return isToday
+    }
+
+    /**
+     * 将字符串转位日期类型
+     * @param date
+     * @return
+     */
+    private fun toDate(date: String?): Date? {
+        return try {
+            date?.let { dateFormat.get()?.parse(it) }
+        } catch (e: ParseException) {
+            null
+        }
+    }
+
+    private val dateFormat: ThreadLocal<SimpleDateFormat?> =
+        object : ThreadLocal<SimpleDateFormat?>() {
+            override fun initialValue(): SimpleDateFormat {
+                return SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            }
+        }
+
+    private val dateFormat2: ThreadLocal<SimpleDateFormat?> =
+        object : ThreadLocal<SimpleDateFormat?>() {
+            override fun initialValue(): SimpleDateFormat {
+                return SimpleDateFormat("yyyy-MM-dd")
+            }
+        }
 }

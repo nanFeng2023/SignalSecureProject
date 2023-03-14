@@ -27,6 +27,10 @@
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id" />
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/google_ad_id" />
+
         <activity
             android:name=".VpnConnectResultActivity"
             android:exported="false"
@@ -51,6 +55,7 @@
             android:exported="false"
             android:launchMode="singleTask"
             android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

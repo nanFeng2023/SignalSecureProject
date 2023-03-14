@@ -70,14 +70,28 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cd_ad_view_group_connect_result"
         android:layout_width="match_parent"
         android:layout_height="328dp"
         android:layout_marginStart="20dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="20dp"
-        android:background="@drawable/shape_viewgroup_vpn_connect_result"
-        android:visibility="gone"
+        app:cardBackgroundColor="@color/white"
+        android:visibility="invisible"
+        app:cardCornerRadius="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/cl_result" />
+
+    <ImageView
+        android:id="@+id/iv_ad_bg_connect_result"
+        android:layout_width="match_parent"
+        android:layout_height="328dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="20dp"
+        android:scaleType="fitXY"
+        android:src="@mipmap/ic_ad_bg_connect_result"
+        android:visibility="visible"
         app:layout_constraintTop_toBottomOf="@+id/cl_result" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

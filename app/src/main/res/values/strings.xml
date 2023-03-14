@@ -8,8 +8,10 @@
     <string name="result" translatable="false">Result</string>
 
     <string name="facebook_app_id" translatable="false">fb id assigned by your application</string>
+    <string name="google_ad_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
     <string name="connection_succeed" translatable="false">Connection succeed</string>
     <string name="connection_fail" translatable="false">Disconnection succeed</string>
     <string name="vpn_permission_denied" translatable="false">Insufficient permission to create the VPN service</string>
     <string name="vpn_error" translatable="false">\"Description Failed to start the background service：%s\"</string>
+    <string name="ad_title" translatable="false">AD</string>
 </resources>

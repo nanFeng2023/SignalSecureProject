@@ -1,6 +1,5 @@
 package com.ssv.signalsecurevpn
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +9,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.util.ProjectUtil
+import com.ssv.signalsecurevpn.util.SharePreferenceUtil
 
 /*
 * vpn选择页面适配器
@@ -18,7 +18,7 @@ class SettingAdapter(private val dataList: List<VpnBean>) :
     RecyclerView.Adapter<SettingAdapter.SettingViewHolder>() {
 
     lateinit var onItemViewClick: (v: View, pos: Int) -> Unit
-    private val curSelectName = SharePreferenceUtil.getShareString(ProjectUtil.CUR_SELECT_CITY)
+    private val curSelectName = SharePreferenceUtil.getString(ProjectUtil.CUR_SELECT_CITY)
 
     inner class SettingViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var ivCountry: ImageView = view.findViewById(R.id.iv_country_rv_item_setting)
@@ -48,7 +48,6 @@ class SettingAdapter(private val dataList: List<VpnBean>) :
 
         //item点击事件
         holder.itemView.setOnClickListener {
-            Log.i("TAG", "curSelectName:$curSelectName,getName:${dataList[position].getName()}")
             if ((position == 0 && ProjectUtil.stopped) || curSelectName != dataList[position].getName()) {
                 onItemViewClick.invoke(it, position)
             }
@@ -57,10 +56,6 @@ class SettingAdapter(private val dataList: List<VpnBean>) :
 
     /*选中状态判断*/
     private fun selectState(holder: SettingViewHolder, vpnBean: VpnBean) {
-        Log.i(
-            "TAG",
-            "selectState()---curSelectName:$curSelectName---vpnBean.getName:${vpnBean.getName()}"
-        )
         if (curSelectName == vpnBean.getName()) {
             holder.clItem.setBackgroundResource(R.drawable.shape_rv_item_checked_setting)
         } else {
