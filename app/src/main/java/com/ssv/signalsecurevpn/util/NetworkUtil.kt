@@ -31,7 +31,7 @@ import kotlin.math.roundToInt
 object NetworkUtil {
     private const val BASE_URL = "https://ipinfo.io/json"
     private const val COUNTRY_HK = "HK"//HongKong 香港
-    private const val COUNTRY_CN = "CN"//China 大陆 //todo 正是包时候记得打开
+    private const val COUNTRY_CN = "CN"//China 大陆
     private const val COUNTRY_IRAN = "Iran"//伊朗
     private const val COUNTRY_MACAU = "Macau" //澳门
 
@@ -209,8 +209,8 @@ object NetworkUtil {
         val adData: String? = SharePreferenceUtil.getString(AdMob.SIGVN_AD)
         Timber.tag(ConfigurationUtil.LOG_TAG)
             .d("NetworkUtil----obtainAdData()---远端广告数据:$adData")
-        adDataResult = if (!TextUtils.isEmpty(adData)) {
-            adData?.let { parseAdData(it) }
+        adDataResult = if (adData != null && !TextUtils.isEmpty(adData)) {
+            parseAdData(adData)
         } else {
             //2.没有1才本地
             val obtainNativeJsonData = obtainNativeJsonData("ad.json")
