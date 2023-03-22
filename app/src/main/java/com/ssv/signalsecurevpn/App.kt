@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.github.shadowsocks.Core
 import com.google.android.gms.ads.MobileAds
+import com.google.firebase.ktx.BuildConfig
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.ktx.initialize
 import com.lzy.okgo.OkGo

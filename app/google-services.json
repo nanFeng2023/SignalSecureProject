@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "978763591709",
+    "project_id": "signal-vpn",
+    "storage_bucket": "signal-vpn.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:978763591709:android:559cfa63d2edc4811056f4",
+        "android_client_info": {
+          "package_name": "com.secure.fast.signalvpn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "978763591709-t9b1fbgl6jp049k0gkib4tvnkg2278s3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAk3CQ5_FtTI_Bq72DVeRNvLWzWTU2Rx5Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "978763591709-t9b1fbgl6jp049k0gkib4tvnkg2278s3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

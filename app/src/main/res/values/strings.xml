@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">SignalSecureVpn</string>
+    <string name="app_name" translatable="false">signal secure vpn</string>
     <string name="setting_location" translatable="false">Locations</string>
     <string name="contact_us" translatable="false">Contact Us</string>
     <string name="privacy_policy" translatable="false">Privacy Policy</string>
@@ -7,8 +7,8 @@
     <string name="shareKey" translatable="false">Share</string>
     <string name="result" translatable="false">Result</string>
 
-    <string name="facebook_app_id" translatable="false">fb id assigned by your application</string>
-    <string name="google_ad_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="facebook_app_id" translatable="false">182214207861456</string>
+    <string name="google_ad_id" translatable="false">ca-app-pub-2272201923614054~3753795560</string>
     <string name="connection_succeed" translatable="false">Connection succeed</string>
     <string name="connection_fail" translatable="false">Disconnection succeed</string>
     <string name="vpn_permission_denied" translatable="false">Insufficient permission to create the VPN service</string>

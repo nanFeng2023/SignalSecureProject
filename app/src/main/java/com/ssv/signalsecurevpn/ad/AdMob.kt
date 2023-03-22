@@ -21,8 +21,8 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
+import com.secure.fast.signalvpn.R
 import com.ssv.signalsecurevpn.App
-import com.ssv.signalsecurevpn.R
 import com.ssv.signalsecurevpn.bean.AdBean
 import com.ssv.signalsecurevpn.bean.AdDataResult
 import com.ssv.signalsecurevpn.bean.AdWrap

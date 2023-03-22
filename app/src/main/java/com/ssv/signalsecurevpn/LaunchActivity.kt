@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.view.KeyEvent
 import android.widget.ProgressBar
 import androidx.lifecycle.lifecycleScope
+import com.secure.fast.signalvpn.R
 import com.ssv.signalsecurevpn.ad.AdLoadStateCallBack
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob

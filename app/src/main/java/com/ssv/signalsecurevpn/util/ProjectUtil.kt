@@ -12,7 +12,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
-import com.ssv.signalsecurevpn.R
+import com.secure.fast.signalvpn.R
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
