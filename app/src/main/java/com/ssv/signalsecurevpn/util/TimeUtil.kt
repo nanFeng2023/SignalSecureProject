@@ -2,7 +2,6 @@ package com.ssv.signalsecurevpn.util
 
 import android.os.Looper
 import android.os.Handler
-import android.os.SystemClock
 import com.ssv.signalsecurevpn.call.TimeDataCallBack
 
 object TimeUtil {
@@ -15,7 +14,7 @@ object TimeUtil {
 
     private val runnable = object : Runnable {
         override fun run() {
-            millisecondsRecord = SystemClock.uptimeMillis() - startTime
+            millisecondsRecord = System.currentTimeMillis() - startTime
             calculateTime()
             updateTime(curConnectTime!!)
             handler?.postDelayed(this, 1000)
@@ -37,7 +36,7 @@ object TimeUtil {
     }
 
     fun startAccumulateTime() {
-        startTime = SystemClock.uptimeMillis()
+        startTime = System.currentTimeMillis()
         handler?.postDelayed(runnable, 1000)
     }
 
