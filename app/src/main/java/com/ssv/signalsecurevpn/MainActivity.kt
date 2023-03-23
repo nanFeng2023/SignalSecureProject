@@ -823,11 +823,16 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                                 smartCityList.sortBy {
                                     it.ipDelayTime
                                 }
-                                val randomVpnList: ArrayList<VpnBean> = ArrayList()
-                                for (j in 0 until 3) {
-                                    randomVpnList.add(smartCityList[j])
+                                val size = smartCityList.size
+                                if (size > 3) {
+                                    val randomVpnList: ArrayList<VpnBean> = ArrayList()
+                                    for (j in 0 until 3) {
+                                        randomVpnList.add(smartCityList[j])
+                                    }
+                                    randomSelectVpnAndUpdateInfo(randomVpnList)
+                                } else {
+                                    randomSelectVpnAndUpdateInfo(smartCityList)
                                 }
-                                randomSelectVpnAndUpdateInfo(randomVpnList)
                             }
                         }
                     })
