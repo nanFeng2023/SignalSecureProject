@@ -9,6 +9,7 @@ import com.ssv.signalsecurevpn.ad.AdLoadStateCallBack
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
+import com.ssv.signalsecurevpn.util.AdUtil
 import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.NetworkUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
@@ -26,6 +27,8 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
     private var canBack = true
     private var delayIntervalTime = 100L;//延时间隔时间  默认10s
     private var isHotLaunch = false
+    private var isAdActivityDestroy = false
+
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         //设置singleTask后 需要重新设置新的intent数据才生效
@@ -53,14 +56,14 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
         }, end = {
             canBack = true
             if (AdMob.isReqInterrupt) {//广告达到日上限
-                jumpActivity()
+                dealJumpFlow()
             } else {
                 Timber.tag(ConfigurationUtil.LOG_TAG)
                     .d("LaunchActivity----动画加载完成,即将加载广告")
                 AdManager.showAd(this@LaunchActivity, AdMob.AD_OPEN, object : AdShowStateCallBack {
                     override fun onAdDismiss() {
                         Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdDismiss()")
-                        jumpActivity()
+                        dealJumpFlow()
                     }
 
                     override fun onAdShowed() {
@@ -69,7 +72,7 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
 
                     override fun onAdShowFail() {
                         Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdShowFail()")
-                        jumpActivity()
+                        dealJumpFlow()
                     }
 
                     override fun onAdClicked() {
@@ -145,10 +148,39 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
                 .d("LaunchActivity----jumpActivity()--关闭页面显示之前页面")
             finish()
         } else {
-            Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----jumpActivity()--跳转到主页")
-            val intent = Intent(this, MainActivity::class.java)
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("LaunchActivity----jumpActivity()--跳转到主页")
+            val intent = Intent(this@LaunchActivity, MainActivity::class.java)
             startActivity(intent)
             finish()
+        }
+    }
+
+    private fun dealJumpFlow() {
+        if (AdUtil.activityIsResume(this@LaunchActivity)) {
+            Timber.tag(ConfigurationUtil.LOG_TAG)
+                .d("LaunchActivity----dealJumpFlow()--页面可见1")
+            jumpActivity()
+        } else {
+            lifecycleScope.launch {
+                delay(50)
+                if (AdUtil.activityIsResume(this@LaunchActivity)) {
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("LaunchActivity----dealJumpFlow()--页面可见2")
+                    jumpActivity()
+                } else {
+                    Timber.tag(ConfigurationUtil.LOG_TAG)
+                        .d("LaunchActivity----dealJumpFlow()--广告页面销毁")
+                    isAdActivityDestroy = true
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (isAdActivityDestroy) {
+            dealJumpFlow()
         }
     }
 
@@ -159,6 +191,6 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
 
     override fun onAdLoadFail() {
         Timber.tag(ConfigurationUtil.LOG_TAG).d("LaunchActivity----onAdLoadFail()")
-        jumpActivity()
+        dealJumpFlow()
     }
 }
