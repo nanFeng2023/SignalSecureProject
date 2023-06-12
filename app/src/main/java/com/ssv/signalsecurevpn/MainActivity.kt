@@ -141,11 +141,22 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
     /*业务处理*/
     override fun businessProcess() {
-        if (App.isColdLaunch) {//冷启动显示引导页
-            App.isColdLaunch = false
-            ProjectUtil.isShowGuide = true
-            showGuideAnimation()
+        val executeB = PlanUtil.isExecuteB()
+        Timber.d("businessProcess()---executeB:$executeB")
+        if (executeB) {
+            if (vpnState == BaseService.State.Idle
+                || vpnState == BaseService.State.Stopped
+            ) {//vpn未连接则开始连接
+                connect.launch(null)
+            }
+        } else {
+            if (App.isColdLaunch) {//冷启动显示引导页
+                App.isColdLaunch = false
+                ProjectUtil.isShowGuide = true
+                showGuideAnimation()
+            }
         }
+
         if (ProjectUtil.idle) {
             TimeUtil.resetTime()
             tvConnectTime.text = TimeUtil.curConnectTime

@@ -12,6 +12,7 @@ import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.App
 import com.ssv.signalsecurevpn.bean.AdBean
 import com.ssv.signalsecurevpn.bean.AdDataResult
+import com.ssv.signalsecurevpn.bean.OptionResult
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.call.BusinessProcessCallBack
 import com.ssv.signalsecurevpn.call.IpDelayTestCallBack
@@ -41,6 +42,7 @@ object NetworkUtil {
 
     var adDataResult: AdDataResult? = null
     var isRestrictArea = false//是否是限制地区
+    lateinit var optionResult: OptionResult
 
     private fun obtainNativeJsonData(jsonDataName: String): StringBuilder {
         val assetManager = App.appContext.assets
@@ -216,6 +218,25 @@ object NetworkUtil {
             val obtainNativeJsonData = obtainNativeJsonData("ad.json")
             parseAdData(obtainNativeJsonData.toString())
         }
+    }
+
+    fun obtainPlanData() {
+        val planStr = SharePreferenceUtil.getString(ConfigurationUtil.PLAN_KEY)
+        optionResult = if (!planStr.isNullOrEmpty()) {
+            parsePlanData(planStr)
+        } else {
+            parsePlanData(obtainNativeJsonData("plan.json").toString())
+        }
+    }
+
+    private fun parsePlanData(data: String): OptionResult {
+        val json = JSONObject(data)
+        val optionResult = OptionResult()
+        optionResult.planb_start = json.optString(ConfigurationUtil.PLAN_PARAM_KEY1)
+        optionResult.planb_ratio = json.optString(ConfigurationUtil.PLAN_PARAM_KEY2)
+        optionResult.a_ref = json.optString(ConfigurationUtil.PLAN_PARAM_KEY3)
+        optionResult.a_cloak = json.optString(ConfigurationUtil.PLAN_PARAM_KEY4)
+        return optionResult
     }
 
     private fun parseAdData(data: String): AdDataResult {

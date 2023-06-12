@@ -19,6 +19,9 @@ object FirebaseUtils {
 
                     val adData = remoteConfig.getString("sigvn_ad")
                     SharePreferenceUtil.putString(AdMob.SIGVN_AD, adData)
+
+                    val planStr = remoteConfig.getString(ConfigurationUtil.PLAN_KEY)
+                    SharePreferenceUtil.putString(ConfigurationUtil.PLAN_KEY, planStr)
                 }
             }
         } catch (e: Exception) {

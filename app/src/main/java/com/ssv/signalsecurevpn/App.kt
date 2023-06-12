@@ -20,6 +20,9 @@ import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.util.FirebaseUtils
 import com.ssv.signalsecurevpn.util.NetworkUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -48,6 +51,15 @@ class App : MultiDexApplication() {
             //广告注册
             MobileAds.initialize(this) {}
             Core.stopService()//杀掉主进程重启关闭VPN
+            //注册AdMob
+            AdManager.abstractAd = AdMob
+            //异步初始化
+            asyInit()
+        }
+    }
+
+    private fun asyInit() {
+        GlobalScope.launch(Dispatchers.IO) {
             //日志开关
             if (BuildConfig.DEBUG) {
                 Timber.plant(Timber.DebugTree())
@@ -60,8 +72,8 @@ class App : MultiDexApplication() {
             NetworkUtil.obtainServiceData()
             //请求广告数据，预加载
             NetworkUtil.obtainAdData()
-            //注册AdMob
-            AdManager.abstractAd = AdMob
+            //请求方案
+            NetworkUtil.obtainPlanData()
         }
     }
 
