@@ -1,4 +1,4 @@
-package com.ssv.signalsecurevpn
+package com.ssv.signalsecurevpn.activity
 
 import android.app.Activity
 import android.app.Application.ActivityLifecycleCallbacks
@@ -6,16 +6,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.github.shadowsocks.Core.activity
 import com.google.android.gms.ads.AdActivity
-import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
+import com.ssv.signalsecurevpn.util.AdUtil
 import com.ssv.signalsecurevpn.util.ConfigurationUtil
 import com.ssv.signalsecurevpn.util.ProjectUtil
-import com.ssv.signalsecurevpn.util.SharePreferenceUtil
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
@@ -41,7 +36,6 @@ object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
                 Timber.tag(ConfigurationUtil.LOG_TAG)
                     .d("ColdActivityLifecycleCallback----onActivityStarted()---热启动")
                 val intent = Intent(activity, LaunchActivity::class.java)
-                intent.putExtra(ProjectUtil.IS_HOT_LAUNCH_KEY, true)
                 activity.startActivity(intent)
             }
             frontAndBackgroundCallBack?.onAppToFront()
@@ -74,6 +68,7 @@ object CustomActivityLifecycleCallback : ActivityLifecycleCallbacks {
                 Timber.tag(ConfigurationUtil.LOG_TAG)
                     .d("ColdActivityLifecycleCallback----onActivityStopped()---judgeAdActivity()---activity:${activity.localClassName}")
                 activity.finish()
+                AdUtil.isAdPageDestroyEvent = true
             }, 3000)
         }
     }

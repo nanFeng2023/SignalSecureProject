@@ -1,14 +1,14 @@
-package com.ssv.signalsecurevpn
+package com.ssv.signalsecurevpn.activity
 
 import android.animation.Animator
 import android.content.Intent
 import android.os.Bundle
 import android.os.RemoteException
-import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.cardview.widget.CardView
@@ -30,6 +30,7 @@ import com.github.shadowsocks.utils.Key
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.navigation.NavigationView.OnNavigationItemSelectedListener
 import com.google.android.material.snackbar.Snackbar
+import com.ssv.signalsecurevpn.R
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
@@ -38,15 +39,16 @@ import com.ssv.signalsecurevpn.call.BusinessProcessCallBack
 import com.ssv.signalsecurevpn.call.FrontAndBackgroundCallBack
 import com.ssv.signalsecurevpn.call.IpDelayTestCallBack
 import com.ssv.signalsecurevpn.call.TimeDataCallBack
+import com.ssv.signalsecurevpn.json.EventJson
 import com.ssv.signalsecurevpn.util.*
 import com.ssv.signalsecurevpn.widget.AlertDialogUtil
+import com.ssv.signalsecurevpn.widget.LoadingDialog
 import com.ssv.signalsecurevpn.widget.MaskView
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
+import org.json.JSONObject
 import timber.log.Timber
 import java.util.*
 import kotlin.collections.ArrayList
@@ -63,12 +65,10 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
     private lateinit var ivConnectProgressState: ImageView
     private var activityResultLauncher: ActivityResultLauncher<Intent>? = null
     private lateinit var ivCountry: ImageView
-    private var currentVpnBean: VpnBean? = null
     private lateinit var tvConnectTime: TextView
     private lateinit var lavGuide: LottieAnimationView
     private lateinit var maskView: MaskView
     private lateinit var cl: ConstraintLayout
-    private var vpnState = BaseService.State.Idle
     private val shadowSocksConnection = ShadowsocksConnection(true)
     private val connect = registerForActivityResult(PermissionVPN()) {
         if (it) {//权限拒绝
@@ -82,6 +82,11 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
     private lateinit var nativeAdViewParentGroup: CardView
     private lateinit var ivAdBg: ImageView
 
+    companion object {
+        var vpnState = BaseService.State.Idle
+        var currentVpnBean: VpnBean? = null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //必须要写个对象进去切换，才可以正常连接，否则连接失败
@@ -89,31 +94,77 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
             ?: ProfileManager.createProfile(Profile())
         profile.id = DataStore.profileId
         Core.switchProfile(profile.id)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (drawer.isOpen) {
+                    drawer.closeDrawers()
+                } else if (ProjectUtil.isShowGuide) {
+                    dismissGuideAnimation()
+                } else if (ProjectUtil.stopping) {
+                    stopVpnStoppingAnimation()
+                } else if (!ProjectUtil.connecting) {
+                    ProjectUtil.isAppMainBack = true//区分home还是back，决定后续是否走热启动流程
+                    finish()
+                }
+            }
+        })
     }
 
     override fun onResume() {
         super.onResume()
         //引导页过来才刷新
         if (AdMob.isRefreshNativeAd) {
-            AdMob.isRefreshNativeAd = false
-            Timber.tag(ConfigurationUtil.LOG_TAG).d("MainActivity----onResume()")
-            judgeNativeAdShowing()
+            lifecycleScope.launch(Dispatchers.IO) {
+                loadNativeHomeAd()
+                delay(200)
+                if (AdMob.isOverDayLimit) {
+                    if (AdMob.isAdAvailable(AdMob.AD_NATIVE_HOME)) {
+                        withContext(Dispatchers.Main) {
+                            showNativeAd()
+                        }
+                    }
+                } else {
+                    while (isResume && AdMob.isRefreshNativeAd) {
+                        if (AdMob.isAdAvailable(AdMob.AD_NATIVE_HOME)) {
+                            withContext(Dispatchers.Main) {
+                                showNativeAd()
+                            }
+                        }
+                        delay(200)
+                    }
+                }
+            }
+            //上传session事件
+            reportSessionEvent()
         }
     }
 
-    private fun judgeNativeAdShowing() {
-        if (AdManager.isAdAvailable(AdMob.AD_NATIVE_HOME) == true) {
-            ivAdBg.visibility = View.INVISIBLE
-            nativeAdViewParentGroup.visibility = View.VISIBLE
-            showNativeAd()
-        } else {
-            ivAdBg.visibility = View.VISIBLE
-            nativeAdViewParentGroup.visibility = View.INVISIBLE
-            loadNativeHomeAd()
+    private fun reportSessionEvent() {
+        val lastTime = SharePreferenceUtil.getLong(ConfigurationUtil.SESSION_REPORT_TIME)
+        val curTime = System.currentTimeMillis()
+        if (curTime - lastTime > 30000) {
+            val lastSendFailSessionEvent =
+                SharePreferenceUtil.getString(ConfigurationUtil.FAIL_EVENT_SESSION)
+            if (!lastSendFailSessionEvent.isNullOrEmpty()) {
+                NetworkUtil.reportEvent(
+                    NetworkUtil.EventType.SESSION,
+                    JSONObject(lastSendFailSessionEvent)
+                )
+                SharePreferenceUtil.putString(ConfigurationUtil.FAIL_EVENT_SESSION, "")
+            } else {
+                NetworkUtil.reportEvent(
+                    NetworkUtil.EventType.SESSION,
+                    EventJson.createSessionEventJson()
+                )
+            }
+            SharePreferenceUtil.putLong(ConfigurationUtil.SESSION_REPORT_TIME, curTime)
         }
     }
 
     private fun showNativeAd() {
+        ivAdBg.visibility = View.INVISIBLE
+        nativeAdViewParentGroup.visibility = View.VISIBLE
         //展示原生广告
         AdManager.showAd(
             this, AdMob.AD_NATIVE_HOME, object : AdShowStateCallBack {
@@ -122,6 +173,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                 }
 
                 override fun onAdShowed() {
+                    AdMob.isRefreshNativeAd = false
                     //展示广告后再次请求新广告缓存下来
                     loadNativeHomeAd()
                 }
@@ -141,11 +193,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
     /*业务处理*/
     override fun businessProcess() {
-        if (App.isColdLaunch) {//冷启动显示引导页
-            App.isColdLaunch = false
-            ProjectUtil.isShowGuide = true
-            showGuideAnimation()
-        }
         if (ProjectUtil.idle) {
             TimeUtil.resetTime()
             tvConnectTime.text = TimeUtil.curConnectTime
@@ -231,6 +278,21 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                 ProjectUtil.CUR_SELECT_CITY,
                 ProjectUtil.DEFAULT_FAST_SERVERS
             )
+            //上报install事件
+            NetworkUtil.reportEvent(
+                NetworkUtil.EventType.INSTALL,
+                EventJson.createInstallEventJson()
+            )
+        } else {
+            val lastSendFailInstallEvent =
+                SharePreferenceUtil.getString(ConfigurationUtil.FAIL_EVENT_INSTALL)
+            if (!lastSendFailInstallEvent.isNullOrEmpty()) {
+                NetworkUtil.reportEvent(
+                    NetworkUtil.EventType.INSTALL,
+                    JSONObject(lastSendFailInstallEvent)
+                )
+                SharePreferenceUtil.putString(ConfigurationUtil.FAIL_EVENT_INSTALL, "")
+            }
         }
         val city = SharePreferenceUtil.getString(ProjectUtil.CUR_SELECT_CITY)
         ivCountry.setImageResource(
@@ -246,6 +308,36 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         if (NetworkUtil.isRestrictArea) {
             restrictDialog()
         }
+
+        selectPlan()
+        FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_HOME_SHOW)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        selectPlan()
+    }
+
+    private fun selectPlan() {
+        val userType = PlanUtil.curUserType()
+        if (userType == PlanUtil.UserType.NATURE) {
+            showGuideAnimation()
+        } else {//ml用户
+            val executeB = PlanUtil.isExecuteB()
+            Timber.d("selectPlan()---executeB:$executeB")
+            if (executeB) {
+                if (vpnState == BaseService.State.Idle
+                    || vpnState == BaseService.State.Stopped
+                ) {
+                    FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_EXECUTE_PLAN_B)
+                    connect.launch(null)
+                }
+            } else {
+                showGuideAnimation()
+            }
+            FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_REFER_ML_USER)
+        }
+        App.isColdLaunch = false
     }
 
     private fun loadNativeResultAd() {
@@ -307,6 +399,9 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         profile.password = currentVpnBean?.pwd.toString()
         profile.remotePort = currentVpnBean?.port!!
         ProfileManager.updateProfile(profile)
+
+        //保存当前连接ip
+        SharePreferenceUtil.putString(ConfigurationUtil.CUR_CONNECT_IP, currentVpnBean!!.ip)
     }
 
     private fun showAd(isConnected: Boolean) {
@@ -338,11 +433,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
     }
 
     private fun jumpConnectResultActivity(isConnected: Boolean) {
-        if (!AdUtil.activityIsResume(this@MainActivity)) {
-            if (!isConnected) {//连接失败重置时间
-                TimeUtil.resetTime()
-                tvConnectTime.text = TimeUtil.curConnectTime
-            }
+        if (!AdUtil.pageIsCanJump(this@MainActivity)) {
             return
         }
         val intent = Intent(this@MainActivity, VpnConnectResultActivity::class.java)
@@ -386,6 +477,8 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
         nativeAdViewParentGroup = findViewById(R.id.nav_ad_parent_group_main)
         ivAdBg = findViewById(R.id.iv_ad_bg_main)
+
+        setTopMargin(drawer)
     }
 
     override fun getLayout(): Int {
@@ -410,18 +503,10 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
             }
             BaseService.State.Connected -> {//连接成功
-                lav.cancelAnimation()
-                //连接成功才开始计时
-                TimeUtil.resetTime()
-                TimeUtil.startAccumulateTime()
-//                jumpConnectResultActivity(true)
-                showAd(true)
+                connectedAfter()
             }
             BaseService.State.Stopped -> {//停止成功
-                lav.cancelAnimation()
-                TimeUtil.pauseTime()//停止计时
-//                jumpConnectResultActivity(false)
-                showAd(false)
+                stoppedAfter()
             }
             BaseService.State.Connecting -> {
 
@@ -432,8 +517,59 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         }
     }
 
+    private fun stoppedAfter() {
+        SharePreferenceUtil.putString(
+            ConfigurationUtil.CUR_CONNECT_IP,
+            SharePreferenceUtil.getString(ConfigurationUtil.PUBLIC_NETWORK_IP)
+        )
+        uploadConnectTime()
+        lav.cancelAnimation()
+        TimeUtil.pauseTime()//停止计时
+        showAd(false)
+    }
+
+    private fun connectedAfter() {
+        FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT_SUCCESS)
+        if (PlanUtil.isPlanB) {
+            connectionJob = lifecycleScope.launch {
+                flow {
+                    (0 until 10).forEach {
+                        delay(1000)
+                        emit(it)
+                    }
+                }.onStart {
+                    AdMob.connectedAfterRefreshAdCache()
+                }.onCompletion {
+                    lav.cancelAnimation()
+                    //连接成功才开始计时
+                    TimeUtil.resetTime()
+                    TimeUtil.startAccumulateTime()
+                    showAd(true)
+                    connectStateChange()
+                }.collect {
+                    if (AdManager.isOverLimitDay() == true || AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) == true) {
+                        connectionJob?.cancel()
+                    }
+                }
+            }
+        } else {
+            lav.cancelAnimation()
+            //连接成功才开始计时
+            TimeUtil.resetTime()
+            TimeUtil.startAccumulateTime()
+            showAd(true)
+            connectStateChange()
+        }
+    }
+
+    private fun uploadConnectTime() {
+        val bundle = Bundle()
+        bundle.putLong("time", TimeUtil.timeStamp)
+        FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT_TIME_STAMP, bundle)
+    }
+
     private fun changeVpnState(state: BaseService.State) {
-        this.vpnState = state
+        vpnState = state
         //状态切换
         when (vpnState) {
             BaseService.State.Idle -> {
@@ -485,6 +621,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         changeVpnState(BaseService.State.Idle)
         //连接失败
         reqVpnConnectFail()
+        FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT_FAIL)
     }
 
     override fun onBinderDied() {
@@ -501,13 +638,25 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
             }
             R.id.iv_country_bg_main -> {//vpn选择页面
                 stopVpnStoppingAnimation()
-                val intent = Intent(this, VpnSelectActivity::class.java)
-                activityResultLauncher?.launch(intent)
+                if (NetworkUtil.isLoadingServerData) {
+                    loading(false)
+                } else {
+                    val serverData =
+                        SharePreferenceUtil.getString(ConfigurationUtil.REMOTE_SERVER_DATA)
+                    if (serverData.isNullOrEmpty()) {
+                        NetworkUtil.requestServerData()
+                        loading(true)
+                    } else {
+                        jumpToServerPage()
+                    }
+                }
             }
             R.id.lav_main -> {
                 if ((vpnState == BaseService.State.Idle && !ProjectUtil.connected)
                     || vpnState == BaseService.State.Stopped
-                ) {//vpn未连接则开始连接
+                ) {
+                    FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CLICK_CONNECT)
+                    //vpn未连接则开始连接
                     connect.launch(null)
                 } else if (vpnState == BaseService.State.Connected) {//vpn连接状态点击则断开
                     ProjectUtil.isVpnSelectPageReqStopVpn = false
@@ -516,10 +665,28 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
             }
             R.id.lav_guide_main -> {
                 dismissGuideAnimation()
+                FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_GUIDE_CLICK)
                 //开始连接
                 connect.launch(null)
             }
         }
+    }
+
+    private fun loading(isJump: Boolean) {
+        val loadingDialog = LoadingDialog()
+        loadingDialog.showNow(supportFragmentManager, "loading")
+        lifecycleScope.launch {
+            delay(10000)
+            loadingDialog.dismiss()
+            if (isJump) {
+                jumpToServerPage()
+            }
+        }
+    }
+
+    private fun jumpToServerPage() {
+        val intent = Intent(this, VpnSelectActivity::class.java)
+        activityResultLauncher?.launch(intent)
     }
 
     /*停止VPN连接动画*/
@@ -562,61 +729,40 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                 } else {
                     if (ProjectUtil.connecting)//如果正在连接，再次点击不生效
                         return
-                    Timber.tag(ConfigurationUtil.LOG_TAG)
-                        .d("MainActivity----startConnect()---vpnState:$vpnState")
-                    if ((vpnState == BaseService.State.Idle && !ProjectUtil.connected)
-                        || vpnState == BaseService.State.Stopped
-                    ) {//未连接状态才连接
-                        Timber.tag(ConfigurationUtil.LOG_TAG)
-                            .d("MainActivity----startConnect()---开始连接")
-                        val selectCity =
-                            SharePreferenceUtil.getString(ProjectUtil.CUR_SELECT_CITY)
-                        Timber.tag(ConfigurationUtil.LOG_TAG)
-                            .d("MainActivity----startConnect()---选择连接城市：$selectCity")
-                        if (ProjectUtil.DEFAULT_FAST_SERVERS == selectCity) {//如果是选中的smart则进行测速
-                            selectSmartService()
-                        } else {
-                            //更新profile
-                            updateVpnInfo()
-                        }
-
-                        //动画播放,开始连接VPN
-                        connectionJob = lifecycleScope.launch {
-                            flow {
-                                (0 until 10).forEach {
-                                    delay(1000)
-                                    emit(it)
-                                }
-                            }.onStart {
-                                lav.repeatMode = LottieDrawable.RESTART
-                                lav.playAnimation()
-                                Timber.tag(ConfigurationUtil.LOG_TAG)
-                                    .d("MainActivity----startConnect()---开始连接动画")
-                                //请求插屏广告
-                                loadInterAd()
-                                //请求原生结果页广告
-                                checkNativeResultAd()
-                            }.onCompletion {
-                                Timber.tag(ConfigurationUtil.LOG_TAG)
-                                    .d("MainActivity----startConnect()---开始连接VPN")
-                                if (ProjectUtil.connecting)
-                                    Core.startService()
-                            }.collect {
-                                val overLimitDay = AdManager.isOverLimitDay()
-                                if (overLimitDay == true) {
-                                    connectionJob?.cancel()
-                                    return@collect
-                                }
-                                val adAvailable =
-                                    AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) ?: false
-                                if (adAvailable) {
-                                    Timber.tag(ConfigurationUtil.LOG_TAG)
-                                        .d("MainActivity----startConnect()---插屏广告有缓存")
-                                    connectionJob?.cancel()
-                                } else {
-                                    Timber.tag(ConfigurationUtil.LOG_TAG)
-                                        .d("MainActivity----startConnect()---没有缓存，请求插屏广告")
-                                }
+                    val delayTime = if (PlanUtil.isPlanB) {
+                        100L
+                    } else {
+                        1000L
+                    }
+                    //动画播放,开始连接VPN
+                    connectionJob = lifecycleScope.launch {
+                        flow {
+                            (0 until 10).forEach {
+                                delay(delayTime)
+                                emit(it)
+                            }
+                        }.onStart {
+                            Timber.tag(ConfigurationUtil.LOG_TAG).d("startConnect()----onStart()")
+                            if (ProjectUtil.DEFAULT_FAST_SERVERS ==
+                                SharePreferenceUtil.getString(ProjectUtil.CUR_SELECT_CITY)
+                            ) {//如果是选中的smart则进行测速
+                                selectSmartService()
+                            }
+                            lav.repeatMode = LottieDrawable.RESTART
+                            lav.playAnimation()
+                            //请求插屏广告
+                            loadInterAd()
+                            //请求原生结果页广告
+                            checkNativeResultAd()
+                        }.onCompletion {
+                            if (ProjectUtil.connecting) {
+                                FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT)
+                                updateVpnInfo()
+                                Core.startService()
+                            }
+                        }.collect {
+                            if (AdManager.isOverLimitDay() == true || AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) == true) {
+                                connectionJob?.cancel()
                             }
                         }
                     }
@@ -630,8 +776,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
             return
         if (ProjectUtil.stopping)//如果正在停止，再次点击不生效
             return
-        Timber.tag(ConfigurationUtil.LOG_TAG)
-            .d("MainActivity----stopConnect()---vpnState:$vpnState")
         if (vpnState.canStop) {//如果VPN连接上才走停止流程
             connectionJob = lifecycleScope.launch {
                 flow {
@@ -640,37 +784,17 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                         emit(it)
                     }
                 }.onStart {
+                    Timber.tag(ConfigurationUtil.LOG_TAG).d("stopConnect()----onStart()")
                     lav.repeatMode = LottieDrawable.REVERSE
                     lav.playAnimation()
-                    Timber.tag(ConfigurationUtil.LOG_TAG)
-                        .d("MainActivity----stopConnect()---开始关闭动画")
-                    Timber.tag(ConfigurationUtil.LOG_TAG)
-                        .d("MainActivity----stopConnect()---开始请求插屏动画")
-                    //请求一次插屏广告
-                    loadInterAd()
-                    //请求原生结果页广告
-                    checkNativeResultAd()
+                    AdMob.stoppedAfterRefreshAdCache()
                 }.onCompletion {
-                    Timber.tag(ConfigurationUtil.LOG_TAG)
-                        .d("MainActivity----stopConnect()---开始关闭VPN")
-                    if (ProjectUtil.stopping) {//动画停止中，点击其他按钮后，终止VPN停止过程
-                        Core.stopService()//停止VPN
+                    if (ProjectUtil.stopping) {
+                        Core.stopService()
                     }
                 }.collect {
-                    val overLimitDay = AdManager.isOverLimitDay()
-                    if (overLimitDay == true) {
+                    if (AdManager.isOverLimitDay() == true || AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) == true) {
                         connectionJob?.cancel()
-                        return@collect
-                    }
-                    val adAvailable =
-                        AdManager.isAdAvailable(AdMob.AD_INTER_CLICK) ?: false
-                    if (adAvailable) {
-                        Timber.tag(ConfigurationUtil.LOG_TAG)
-                            .d("MainActivity----stopConnect()---插屏广告有缓存")
-                        connectionJob?.cancel()
-                    } else {
-                        Timber.tag(ConfigurationUtil.LOG_TAG)
-                            .d("MainActivity----stopConnect()---没有缓存，请求插屏广告")
                     }
                 }
             }
@@ -706,7 +830,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                     startActivity(Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
                 }
                 R.id.update_menu -> {
-                    ProjectUtil.openGooglePlay(this@MainActivity)
+                    ProjectUtil.openGooglePlay()
                 }
                 R.id.share_menu -> {
                     ProjectUtil.callShare(this@MainActivity)
@@ -729,9 +853,13 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
     }
 
     private fun showGuideAnimation() {
-        maskView.visibility = View.VISIBLE
-        lavGuide.visibility = View.VISIBLE
-        lavGuide.playAnimation()
+        if (App.isColdLaunch) {//冷启动显示引导页
+            ProjectUtil.isShowGuide = true
+            maskView.visibility = View.VISIBLE
+            lavGuide.visibility = View.VISIBLE
+            lavGuide.playAnimation()
+            FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_GUIDE_SHOW)
+        }
     }
 
     private fun dismissGuideAnimation() {
@@ -742,23 +870,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
         //手动刷新状态栏字体颜色深色
         ProjectUtil.setLightStatusBar(this)
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event?.repeatCount == 0) {//屏蔽返回键
-            if (drawer.isOpen) {
-                drawer.closeDrawers()
-            } else if (ProjectUtil.isShowGuide) {
-                dismissGuideAnimation()
-            } else if (ProjectUtil.stopping) {
-                stopVpnStoppingAnimation()
-            } else if (!ProjectUtil.connecting) {
-                ProjectUtil.isAppMainBack = true//区分home还是back，决定后续是否走热启动流程
-                finish()
-            }
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
     }
 
     override fun onDestroy() {
@@ -845,13 +956,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         if (list.size > 0) {
             val index = Random().nextInt(list.size)
             currentVpnBean = list[index]
-            //更新profile
-            updateVpnInfo()
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("MainActivity----randomSelectVpnAndUpdateInfo()---选择的IP：${currentVpnBean!!.ip}")
-        } else {
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("MainActivity----randomSelectVpnAndUpdateInfo()---list集合无数据")
         }
     }
 

@@ -16,4 +16,5 @@
     <color name="ad_install_background_color">#191A1E</color>
     <color name="ad_headline_color_result">#FF192340</color>
     <color name="ad_description_color_result">#FF192340</color>
+    <color name="mask_color">#99000000</color>
 </resources>

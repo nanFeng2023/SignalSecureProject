@@ -4,7 +4,7 @@ package com.ssv.signalsecurevpn.util
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
-import com.ssv.signalsecurevpn.App
+import com.ssv.signalsecurevpn.activity.App
 
 /*sp帮助类*/
 @SuppressLint("StaticFieldLeak")

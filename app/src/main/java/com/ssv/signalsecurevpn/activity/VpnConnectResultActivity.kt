@@ -1,16 +1,21 @@
-package com.ssv.signalsecurevpn
+package com.ssv.signalsecurevpn.activity
 
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.cardview.widget.CardView
+import androidx.lifecycle.lifecycleScope
+import com.ssv.signalsecurevpn.R
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
 import com.ssv.signalsecurevpn.call.TimeDataCallBack
-import com.ssv.signalsecurevpn.util.ConfigurationUtil
-import com.ssv.signalsecurevpn.util.ProjectUtil
-import com.ssv.signalsecurevpn.util.TimeUtil
+import com.ssv.signalsecurevpn.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.*
 
@@ -26,6 +31,7 @@ class VpnConnectResultActivity : BaseActivity() {
     private lateinit var ivCountry: ImageView
     private lateinit var adViewGroup: CardView
     private lateinit var ivAdBg: ImageView
+    private var nativeAdIsLoadFinished = false
     override fun businessProcess() {
         Timber.tag(ConfigurationUtil.LOG_TAG)
             .d("VpnConnectResultActivity----businessProcess()")
@@ -53,24 +59,14 @@ class VpnConnectResultActivity : BaseActivity() {
             tvConnectState.setTextColor(getColor(R.color.connect_fail_color_result))
             tvConnectState.text = getString(R.string.connection_fail)
         }
-        showAdAndLoadAd()
-    }
+        FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_RESULT_SHOW)
 
-    private fun showAdAndLoadAd() {
-        if (AdManager.isAdAvailable(AdMob.AD_NATIVE_RESULT) == true) {
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("VpnConnectResultActivity----showAdAndLoadAd()---有原生广告缓存")
-            ivAdBg.visibility = View.INVISIBLE
-            adViewGroup.visibility = View.VISIBLE
-            //展示原生广告
-            showNativeAd()
-        } else {
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("VpnConnectResultActivity----showAdAndLoadAd()---没有原生广告缓存")
-            ivAdBg.visibility = View.VISIBLE
-            adViewGroup.visibility = View.INVISIBLE
-            loadNativeAd()
-        }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finish()
+            }
+        })
+
     }
 
     private fun loadNativeAd() {
@@ -79,6 +75,8 @@ class VpnConnectResultActivity : BaseActivity() {
     }
 
     private fun showNativeAd() {
+        ivAdBg.visibility = View.GONE
+        adViewGroup.visibility = View.VISIBLE
         AdManager.showAd(
             this@VpnConnectResultActivity,
             AdMob.AD_NATIVE_RESULT, object : AdShowStateCallBack {
@@ -87,6 +85,7 @@ class VpnConnectResultActivity : BaseActivity() {
                 }
 
                 override fun onAdShowed() {
+                    nativeAdIsLoadFinished = true
                     loadNativeAd()
                 }
 
@@ -106,17 +105,33 @@ class VpnConnectResultActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        //引导页过来才刷新
-        if (AdMob.isRefreshNativeAd) {
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("VpnConnectResultActivity----onResume()---刷新原生广告")
-            showAdAndLoadAd()
+        if (!nativeAdIsLoadFinished) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                loadNativeAd()
+                delay(200)
+                if (AdMob.isOverDayLimit) {
+                    if (AdMob.isAdAvailable(AdMob.AD_NATIVE_RESULT)) {
+                        withContext(Dispatchers.Main) {
+                            showNativeAd()
+                        }
+                    }
+                } else {
+                    while (isResume && !nativeAdIsLoadFinished) {
+                        if (AdMob.isAdAvailable(AdMob.AD_NATIVE_RESULT)) {
+                            withContext(Dispatchers.Main) {
+                                showNativeAd()
+                            }
+                        }
+                        delay(200)
+                    }
+                }
+            }
         }
     }
 
     override fun bindViewId() {
         ivBack = findViewById(R.id.iv_back)
-        ivBack.setOnClickListener { finish() }
+        ivBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
         tvTitle = findViewById(R.id.tv_title)
 
