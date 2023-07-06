@@ -95,8 +95,6 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
             }
         }
         if (AdManager.isAdAvailable(AdMob.AD_OPEN) == true) {
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("LaunchActivity----updateProgress()---open have cache")
             delayIntervalTime = 10L
         }
     }

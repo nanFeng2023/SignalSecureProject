@@ -5,7 +5,6 @@ import com.github.shadowsocks.core.BuildConfig
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
-import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.json.EventJson
 
 /*远端获取数据*/
@@ -35,6 +34,6 @@ object FirebaseUtils {
         if (!BuildConfig.DEBUG) {
             Firebase.analytics.logEvent(event, bundle)
         }
-        EventJson.uploadDotEventJson(event,bundle)
+        EventJson.uploadDotEventJson(event, bundle)
     }
 }

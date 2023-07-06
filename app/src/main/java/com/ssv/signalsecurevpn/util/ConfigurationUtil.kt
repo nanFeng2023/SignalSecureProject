@@ -18,7 +18,7 @@ object ConfigurationUtil {
     const val REMOTE_AD_KEY = "sigvn_ad"
     const val REMOTE_PLAN_KEY = "sig_vava"
 
-    const val TBA_SERVER_URL = "https://test-lookup.signalvpn.org/chine/grail"
+    const val TBA_SERVER_URL = "https://lookup.signalvpn.org/gall/yipping/pizza/pretty"
 
     //该版本不接入cloak
     const val CLOAK_URL = ""

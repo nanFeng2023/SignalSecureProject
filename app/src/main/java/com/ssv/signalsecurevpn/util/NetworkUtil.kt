@@ -12,7 +12,6 @@ import com.lzy.okgo.OkGo
 import com.lzy.okgo.cache.CacheMode
 import com.lzy.okgo.callback.StringCallback
 import com.lzy.okgo.model.Response
-import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.activity.App
 import com.ssv.signalsecurevpn.bean.AdBean
 import com.ssv.signalsecurevpn.bean.AdDataResult
@@ -367,7 +366,7 @@ object NetworkUtil {
             .headers("drawl", "")
             .headers("footwork", App.appContext.packageName)
             .params("drawl", "")
-            .params("footwork", URLEncoder.encode(App.appContext.packageName, "UTF-8"))
+            .params("stopover", URLEncoder.encode(PhoneInfoUtil.getSysLanguage(), "UTF-8"))
             .tag(this)
             .cacheMode(CacheMode.NO_CACHE)
             .execute(object : StringCallback() {

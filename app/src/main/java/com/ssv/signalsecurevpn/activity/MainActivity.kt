@@ -676,7 +676,7 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         val loadingDialog = LoadingDialog()
         loadingDialog.showNow(supportFragmentManager, "loading")
         lifecycleScope.launch {
-            delay(10000)
+            delay(2000)
             loadingDialog.dismiss()
             if (isJump) {
                 jumpToServerPage()
