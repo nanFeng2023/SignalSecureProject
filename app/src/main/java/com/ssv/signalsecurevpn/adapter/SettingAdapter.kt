@@ -1,4 +1,4 @@
-package com.ssv.signalsecurevpn
+package com.ssv.signalsecurevpn.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.ssv.signalsecurevpn.R
 import com.ssv.signalsecurevpn.bean.VpnBean
 import com.ssv.signalsecurevpn.util.ProjectUtil
 import com.ssv.signalsecurevpn.util.SharePreferenceUtil

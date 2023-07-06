@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
 import com.ssv.signalsecurevpn.R
+import com.ssv.signalsecurevpn.activity.App
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -23,7 +24,6 @@ object ProjectUtil {
     //常量传值key
     const val CUR_SELECT_CITY = "curSelectCity"
     const val SAVE_TIME_MILLIS = "saveTimeMillis"
-    const val IS_HOT_LAUNCH_KEY = "isHotLaunch"
     const val COUNTRY_KEY = "country"
     const val DEFAULT_FAST_SERVERS = "Fast Servers"
     const val IS_FIRST_INTO_APP = "isFirstIntoApp"
@@ -65,6 +65,7 @@ object ProjectUtil {
 
     //是否VPN服务器列表页面请求关闭连接
     var isVpnSelectPageReqStopVpn = false
+
 
     //国家icon资源选择
     fun selectCountryIcon(countryName: String): Int {
@@ -134,13 +135,17 @@ object ProjectUtil {
     fun callEmail(addresses: Array<String>, context: Context) {
         try {
             val intent = Intent(Intent.ACTION_SENDTO)
-            intent.data = Uri.parse("mailto:")
+            intent.data = Uri.parse("mailto:$addresses")
             intent.putExtra(Intent.EXTRA_EMAIL, addresses)
-//            intent.putExtra(Intent.EXTRA_SUBJECT, subject)
-            context.startActivity(intent)
+            val chooserIntent = Intent.createChooser(intent, "Select email")
+            if (chooserIntent != null) {
+                context.startActivity(chooserIntent);
+            } else {
+                Toast.makeText(App.appContext, "Please set up a Mail account", Toast.LENGTH_SHORT).show()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "Contact us ${addresses[0]}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(App.appContext, "Please set up a Mail account", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -154,23 +159,22 @@ object ProjectUtil {
         context.startActivity(Intent.createChooser(shareIntent, "share"))
     }
 
-    fun openGooglePlay(context: Context) {
+    fun openGooglePlay() {
         val playPackage = "com.android.vending"
-        val packageName = context.packageName
+        val packageName = App.appContext.packageName
         try {
             val parse = Uri.parse("market://details?id=${packageName}")
             val intent = Intent(Intent.ACTION_VIEW, parse)
             intent.`package` = playPackage
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+            App.appContext.startActivity(intent)
         } catch (e: Exception) {
             e.printStackTrace()
             val parse =
-                Uri.parse("https://play.google.com/store/apps/details?id=${packageName}")
+                Uri.parse("${ConfigurationUtil.GOOGLE_STORE_URL}$packageName")
             val intent = Intent(Intent.ACTION_VIEW, parse)
-            intent.`package` = playPackage
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+            App.appContext.startActivity(intent)
         }
     }
 

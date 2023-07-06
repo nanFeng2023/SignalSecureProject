@@ -9,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.github.shadowsocks.bg.BaseService
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
@@ -21,11 +22,13 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
-import com.ssv.signalsecurevpn.App
+import com.ssv.signalsecurevpn.activity.App
 import com.ssv.signalsecurevpn.R
+import com.ssv.signalsecurevpn.activity.MainActivity
 import com.ssv.signalsecurevpn.bean.AdBean
 import com.ssv.signalsecurevpn.bean.AdDataResult
 import com.ssv.signalsecurevpn.bean.AdWrap
+import com.ssv.signalsecurevpn.json.EventJson
 import com.ssv.signalsecurevpn.util.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -35,7 +38,7 @@ import java.util.Date
 /*AdMob*/
 object AdMob : AbstractAd() {
     const val AD_OPEN = "open"
-    const val AD_INTER = "inter"
+    private const val AD_INTER = "inter"
     const val AD_NATIVE = "native"
     const val AD_INTER_CLICK = "inter-click"
     const val AD_INTER_IB = "inter-ib"
@@ -44,11 +47,10 @@ object AdMob : AbstractAd() {
     const val SIGVN_SERVICE = "sigvn_service"
     const val SIGVN_SMART_SERVICE = "sigvn_smart_service"
     const val SIGVN_AD = "sigvn_ad"
-    var isReqInterrupt = false
 
-    private var adWrapHashMap: HashMap<String, AdWrap> = HashMap()
+    private var adWrapHashMap = HashMap<String, AdWrap>()
     var isRefreshNativeAd = false
-    private var isOverDayLimit = false
+    var isOverDayLimit = false
     private var ssvShowUpperLimit = 0
     private var ssvClickUpperLimit = 0
     override fun loadAd(type: String, adLoadStateCallBack: AdLoadStateCallBack?) {
@@ -69,35 +71,24 @@ object AdMob : AbstractAd() {
         }
         adWrapHashMap[adWrap.adType] = adWrap
 
-        if (isCanLoadAd(adWrap, type))
+        if (isCanLoadAd(adWrap))
             return
 
-        isReqInterrupt = false
         adWrap.adBeanList = getAdBeanList(type, adDataResult)
         loadAd(type, adWrap)
     }
 
-    private fun isCanLoadAd(adWrap: AdWrap, adType: String): Boolean {
+    private fun isCanLoadAd(adWrap: AdWrap): Boolean {
         var long = SharePreferenceUtil.getLong(ProjectUtil.LAST_AD_SHOW_TIME)
         if (long == 0L) {
             long = System.currentTimeMillis()
             SharePreferenceUtil.putLong(ProjectUtil.LAST_AD_SHOW_TIME, long)
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d(
-                    "AdMob----广告类型：$adType---isCanLoadAd()---第一次记录广告展示时间---时间：${
-                        ProjectUtil.longToYMDHMS(
-                            long
-                        )
-                    }"
-                )
         }
         val longToYMDHMS = ProjectUtil.longToYMDHMS(long)
         val today = ProjectUtil.isToday(longToYMDHMS)
         var adShowNum = SharePreferenceUtil.getInt(ProjectUtil.AD_SHOW_NUM)
         var adClickNum = SharePreferenceUtil.getInt(ProjectUtil.AD_CLICK_NUM)
         if (!today) {//不是今天的，展示数量重置，并记录下当前时间用于后面当日判断
-            Timber.tag(ConfigurationUtil.LOG_TAG)
-                .d("AdMob----广告类型：$adType---isCanLoadAd()---重置广告展示数量统计为1")
             adShowNum = 0
             adClickNum = 0
             SharePreferenceUtil.putLong(ProjectUtil.LAST_AD_SHOW_TIME, System.currentTimeMillis())
@@ -110,9 +101,7 @@ object AdMob : AbstractAd() {
             if (isReachDailyMaxLimit(adShowNum, adClickNum)) {
                 adWrap.adLoadStateCallBack?.onAdLoaded()
                 isOverDayLimit = true
-                isReqInterrupt = true
-                Timber.tag(ConfigurationUtil.LOG_TAG)
-                    .d("AdMob----isCanLoadAd()---广告类型：$adType---adShowNum:$adShowNum---adClickNum:$adClickNum---广告展示或点击事件已达到上限，不再更新广告")
+                Timber.tag(ConfigurationUtil.LOG_TAG).d("AdMob----isCanLoadAd()---广告超限")
                 return true
             }
             return false
@@ -147,8 +136,6 @@ object AdMob : AbstractAd() {
         }
         if (adBean == null)
             return
-        Timber.tag(ConfigurationUtil.LOG_TAG)
-            .d("AdMob----loadAd()---广告类型：$adType---开始请求广告")
         if (AD_OPEN == adType) {
             if (adBean.ssv_type == AD_OPEN) {
                 Timber.tag(ConfigurationUtil.LOG_TAG)
@@ -163,6 +150,20 @@ object AdMob : AbstractAd() {
             loadInterAd(adBean, adType)
         } else if (AD_NATIVE_HOME == adType || AD_NATIVE_RESULT == adType) {
             loadNativeAd(adBean, adType)
+        }
+        //以服务器地址请求打点
+        uploadDotEvent(adType)
+    }
+
+    private fun uploadDotEvent(adType: String) {
+        if (MainActivity.vpnState == BaseService.State.Connected) {
+            if (AD_INTER_CLICK == adType) {
+                FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_INTER_AD)
+                Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_INTER_AD}")
+            } else if (AD_NATIVE_RESULT == adType) {
+                FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_RESULT_AD)
+                Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_RESULT_AD}")
+            }
         }
     }
 
@@ -188,7 +189,7 @@ object AdMob : AbstractAd() {
             val adLoader = builder.forNativeAd {
                 Timber.tag(ConfigurationUtil.LOG_TAG)
                     .d("AdMob----loadNativeAd()---广告类型：$adType---forNativeAd()---nativeAd:$it")
-                onLoadSuccessSetAdWrapState(it, adWrap)
+                onLoadSuccessSetAdWrapState(it, adWrap, adBean)
             }.withAdListener(object : AdListener() {
                 override fun onAdClicked() {
                     super.onAdClicked()
@@ -227,7 +228,7 @@ object AdMob : AbstractAd() {
                 override fun onAdLoaded(interAd: InterstitialAd) {
                     Timber.tag(ConfigurationUtil.LOG_TAG)
                         .d("AdMob----loadInterAd()---广告类型：$adType---onAdLoaded()")
-                    onLoadSuccessSetAdWrapState(interAd, adWrap)
+                    onLoadSuccessSetAdWrapState(interAd, adWrap, adBean)
                 }
 
                 override fun onAdFailedToLoad(p0: LoadAdError) {
@@ -264,7 +265,7 @@ object AdMob : AbstractAd() {
                     override fun onAdLoaded(ad: AppOpenAd) {
                         Timber.tag(ConfigurationUtil.LOG_TAG)
                             .d("AdMob----广告类型：$adType---onAdLoaded()")
-                        onLoadSuccessSetAdWrapState(ad, adWrap)
+                        onLoadSuccessSetAdWrapState(ad, adWrap, adBean)
                     }
 
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
@@ -302,16 +303,20 @@ object AdMob : AbstractAd() {
         }
     }
 
-    private fun onLoadSuccessSetAdWrapState(ad: Any, adWrap: AdWrap) {
+    private fun onLoadSuccessSetAdWrapState(ad: Any, adWrap: AdWrap, adBean: AdBean) {
         adWrap.isAdLoading = false
         adWrap.ad = ad
+        adWrap.adBean = adBean
         adWrap.expirationTime = Date().time
+        adWrap.refreshAdSpace()
+        adWrap.refreshAdLoadIpAndCity()
         adWrap.adLoadStateCallBack?.onAdLoaded()
     }
 
     private fun onLoadFailSetAdWrapState(adWrap: AdWrap) {
         adWrap.isAdLoading = false
         adWrap.ad = null
+        adWrap.adBean = null
     }
 
     override fun showAd(
@@ -419,7 +424,8 @@ object AdMob : AbstractAd() {
                     .d("AdMob----广告类型：$adType---showOpenAd()---no such ad:$ad")
             }
         }
-
+        //上传广告事件
+        EventJson.sendAdvertiseEvent(adWrap)
     }
 
     private fun adClick(adType: String) {
@@ -456,9 +462,8 @@ object AdMob : AbstractAd() {
             iconView = findViewById<ImageView>(R.id.iv_ad_icon)
             advertiserView = findViewById<TextView>(R.id.tv_ad_advertiser)
             nativeAd.mediaContent?.let {
-                Timber.tag(ConfigurationUtil.LOG_TAG)
-                    .d("AdMob----广告类型：$adType---createNativeAdView()---mediaContent:$it")
                 mediaView?.mediaContent = it
+                mediaView?.setImageScaleType(ImageView.ScaleType.FIT_XY)
             }
             (headlineView as TextView?)?.text = nativeAd.headline
             (advertiserView as TextView?)?.text = nativeAd.advertiser
@@ -486,6 +491,8 @@ object AdMob : AbstractAd() {
                     }
                 }
             })
+            //上传广告事件
+            EventJson.sendAdvertiseEvent(adWrap)
             adWrap?.ad = null
             adWrapHashMap.remove(adType)
             adShow(adType)
@@ -500,4 +507,26 @@ object AdMob : AbstractAd() {
     override fun isOverLimitDay(): Boolean {
         return isOverDayLimit
     }
+
+    fun stoppedAfterRefreshAdCache() {
+        adWrapHashMap.forEach {
+            val adWrap = it.value
+            if (adWrap.adType != AD_OPEN && !adWrap.isAdAvailable()) {
+                adWrap.isAdLoading = false
+                loadAd(adWrap.adType, adWrap)
+            }
+        }
+    }
+
+    fun connectedAfterRefreshAdCache() {
+        adWrapHashMap.forEach {
+            val adWrap = it.value
+            if (adWrap.adType != AD_OPEN) {
+                adWrap.ad = null
+                adWrap.isAdLoading = false//避免上次请求未请求完的时候不重新请求
+                loadAd(adWrap.adType, null)
+            }
+        }
+    }
+
 }

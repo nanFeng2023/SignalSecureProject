@@ -1,4 +1,4 @@
-package com.ssv.signalsecurevpn
+package com.ssv.signalsecurevpn.activity
 
 import android.annotation.SuppressLint
 import android.app.ActivityManager
@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import com.github.shadowsocks.Core
 import com.google.android.gms.ads.MobileAds
+import com.google.firebase.ktx.BuildConfig
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.ktx.initialize
 import com.lzy.okgo.OkGo
@@ -19,7 +20,7 @@ import com.lzy.okgo.model.HttpParams
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.util.FirebaseUtils
-import com.ssv.signalsecurevpn.util.NetworkUtil
+import com.ssv.signalsecurevpn.util.PlanUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -68,12 +69,7 @@ class App : MultiDexApplication() {
             if (!BuildConfig.DEBUG) {
                 FirebaseUtils.loadConfigure()
             }
-            //请求服务器列表  预加载数据
-            NetworkUtil.obtainServiceData()
-            //请求广告数据，预加载
-            NetworkUtil.obtainAdData()
-            //请求方案
-            NetworkUtil.obtainPlanData()
+            PlanUtil.obtainReferrer()
         }
     }
 

@@ -2,7 +2,7 @@ package com.ssv.signalsecurevpn.util
 
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
-import com.ssv.signalsecurevpn.App
+import com.ssv.signalsecurevpn.activity.App
 import timber.log.Timber
 import kotlin.random.Random
 
@@ -25,19 +25,19 @@ object PlanUtil {
                 Timber.d("obtainReferrer()---code:$p0")
                 when (p0) {
                     InstallReferrerClient.InstallReferrerResponse.OK -> {
-                        SharePreferenceUtil.putBoolean(
-                            ConfigurationUtil.INSTALL_REFERRER_REQ_OK,
-                            true
-                        )
                         val referrer = referrerClient.installReferrer
-                        var installReferrer = referrer.installReferrer
-                        installReferrer="【gclid】"
+                        val installReferrer = referrer.installReferrer
                         Timber.d("obtainReferrer()---installReferrer:$installReferrer")
-                        if (!installReferrer.isNullOrEmpty()){}
+                        if (!installReferrer.isNullOrEmpty()) {
                             SharePreferenceUtil.putString(
                                 ConfigurationUtil.INSTALL_REFERRER,
                                 installReferrer
                             )
+                            SharePreferenceUtil.putBoolean(
+                                ConfigurationUtil.INSTALL_REFERRER_REQ_OK,
+                                true
+                            )
+                        }
 
                         val referrerClickTimestampSeconds = referrer.referrerClickTimestampSeconds
                         SharePreferenceUtil.putLong(
@@ -119,9 +119,14 @@ object PlanUtil {
         NATURE
     }
 
+    enum class CloakTYPE {
+        BLACK_LIST,
+        NORMAL
+    }
+
     private fun bType(): BSwitchType {
         val optionResult = NetworkUtil.optionResult
-        return when (optionResult.planb_start) {
+        return when (optionResult.sig_home) {
             "1" -> {
                 BSwitchType.ONLY_COLD_OPEN
             }
@@ -157,7 +162,7 @@ object PlanUtil {
 
     private fun isBProbability(): Boolean {
         var probability = 50
-        val planRatio = NetworkUtil.optionResult.planb_ratio.trim()
+        val planRatio = NetworkUtil.optionResult.sig_yes.trim()
         if (planRatio.isNotEmpty()) {
             probability = planRatio.toInt()
         }
@@ -190,7 +195,7 @@ object PlanUtil {
         return false
     }
 
-    private fun curUserType(): UserType {
+    fun curUserType(): UserType {
         var userType = UserType.NATURE
         val installUserRef = SharePreferenceUtil.getString(ConfigurationUtil.INSTALL_REFERRER)
         installUserRef?.apply {
@@ -210,7 +215,7 @@ object PlanUtil {
     }
 
     private fun interShowType(): InterType {
-        return when (NetworkUtil.optionResult.a_ref.trim()) {
+        return when (NetworkUtil.optionResult.sig_tio.trim()) {
             "1" -> {
                 InterType.DISPLAY
             }

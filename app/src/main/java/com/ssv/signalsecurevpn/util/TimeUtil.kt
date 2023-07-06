@@ -11,6 +11,7 @@ object TimeUtil {
     private var timeBuff = 0L
     var curConnectTime: String? = null
     var dataCallList: ArrayList<TimeDataCallBack> = ArrayList()
+    var timeStamp = 0L
 
     private val runnable = object : Runnable {
         override fun run() {
@@ -26,6 +27,7 @@ object TimeUtil {
         val seconds = accumulatedTime / 1000 % 60
         val minutes = accumulatedTime / 1000 / 60 % 60
         val hours = accumulatedTime / 1000 / 60 / 24 % 24
+        timeStamp = hours * 3600 + minutes * 60 + seconds
         curConnectTime = String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 

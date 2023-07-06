@@ -1,19 +1,21 @@
-package com.ssv.signalsecurevpn
+package com.ssv.signalsecurevpn.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.ssv.signalsecurevpn.R
+import com.ssv.signalsecurevpn.adapter.SettingAdapter
 import com.ssv.signalsecurevpn.ad.AdManager
 import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
-import com.ssv.signalsecurevpn.util.NetworkUtil
-import com.ssv.signalsecurevpn.util.ProjectUtil
-import com.ssv.signalsecurevpn.util.SharePreferenceUtil
+import com.ssv.signalsecurevpn.util.*
 import com.ssv.signalsecurevpn.widget.AlertDialogUtil
+import timber.log.Timber
 
 /*
 * VPN选择页面
@@ -32,6 +34,37 @@ class VpnSelectActivity : BaseActivity() {
             //展示系统弹窗
             showAlertDialog(position)
         }
+        FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_SERVER_SHOW)
+        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_SERVER_SHOW}")
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (PlanUtil.isShowInterAd()) {
+                    AdManager.showAd(
+                        this@VpnSelectActivity,
+                        AdMob.AD_INTER_IB,
+                        object : AdShowStateCallBack {
+                            override fun onAdDismiss() {
+                                finishPageAndLoadAd()
+                            }
+
+                            override fun onAdShowed() {
+
+                            }
+
+                            override fun onAdShowFail() {
+                                finishPageAndLoadAd()
+                            }
+
+                            override fun onAdClicked() {
+
+                            }
+                        })
+                } else {
+                    finish()
+                }
+            }
+        })
     }
 
     override fun bindViewId() {
@@ -41,10 +74,12 @@ class VpnSelectActivity : BaseActivity() {
         tvTitle.setText(R.string.setting_location)
 
         ivBack.setOnClickListener {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
         }
-        //请求插屏广告
-        AdManager.loadAd(AdMob.AD_INTER_IB, null)
+        if (PlanUtil.isShowInterAd()) {
+            //请求插屏广告
+            AdManager.loadAd(AdMob.AD_INTER_IB, null)
+        }
     }
 
     override fun getLayout(): Int {
@@ -85,30 +120,9 @@ class VpnSelectActivity : BaseActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        AdManager.showAd(this@VpnSelectActivity, AdMob.AD_INTER_IB,object :AdShowStateCallBack{
-            override fun onAdDismiss() {
-                finishPageAndLoadAd()
-            }
-
-            override fun onAdShowed() {
-
-            }
-
-            override fun onAdShowFail() {
-                finishPageAndLoadAd()
-            }
-
-            override fun onAdClicked() {
-
-            }
-        })
-    }
-
-    private fun finishPageAndLoadAd(){
+    private fun finishPageAndLoadAd() {
         finish()
-        AdManager.loadAd(AdMob.AD_INTER_IB, null)
-        overridePendingTransition(0,0)
+        overridePendingTransition(0, 0)
     }
 
 }
