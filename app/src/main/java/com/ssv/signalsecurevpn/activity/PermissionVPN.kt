@@ -28,7 +28,6 @@ class PermissionVPN : ActivityResultContract<Void?, Boolean>() {
     override fun parseResult(resultCode: Int, intent: Intent?) =
         if (resultCode == Activity.RESULT_OK) {
             FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_PERMISSION_GRANT_USER)
-            Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_PERMISSION_GRANT_USER}")
             false
         } else {
             Timber.e("Failed to start VpnService: $intent")

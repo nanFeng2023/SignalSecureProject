@@ -43,7 +43,6 @@ class LaunchActivity : BaseActivity(), AdLoadStateCallBack {
             }
         })
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_LAUNCH_SHOW)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_LAUNCH_SHOW}")
         NetworkUtil.requestServerData()
         NetworkUtil.obtainServiceData(SharePreferenceUtil.getString(ConfigurationUtil.REMOTE_SERVER_DATA))
     }

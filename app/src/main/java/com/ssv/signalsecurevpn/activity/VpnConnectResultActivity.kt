@@ -60,7 +60,6 @@ class VpnConnectResultActivity : BaseActivity() {
             tvConnectState.text = getString(R.string.connection_fail)
         }
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_RESULT_SHOW)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_RESULT_SHOW}")
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

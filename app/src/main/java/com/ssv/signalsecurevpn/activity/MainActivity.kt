@@ -311,7 +311,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
         selectPlan()
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_HOME_SHOW)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_HOME_SHOW}")
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -331,14 +330,12 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                     || vpnState == BaseService.State.Stopped
                 ) {
                     FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_EXECUTE_PLAN_B)
-                    Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_EXECUTE_PLAN_B}")
                     connect.launch(null)
                 }
             } else {
                 showGuideAnimation()
             }
             FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_REFER_ML_USER)
-            Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_REFER_ML_USER}")
         }
         App.isColdLaunch = false
     }
@@ -533,7 +530,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
 
     private fun connectedAfter() {
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT_SUCCESS)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_CONNECT_SUCCESS}")
         if (PlanUtil.isPlanB) {
             connectionJob = lifecycleScope.launch {
                 flow {
@@ -570,7 +566,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         val bundle = Bundle()
         bundle.putLong("time", TimeUtil.timeStamp)
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT_TIME_STAMP, bundle)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_CONNECT_TIME_STAMP}---time:${TimeUtil.timeStamp}")
     }
 
     private fun changeVpnState(state: BaseService.State) {
@@ -627,7 +622,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
         //连接失败
         reqVpnConnectFail()
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT_FAIL)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_CONNECT_FAIL}")
     }
 
     override fun onBinderDied() {
@@ -662,7 +656,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                     || vpnState == BaseService.State.Stopped
                 ) {
                     FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CLICK_CONNECT)
-                    Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_CLICK_CONNECT}")
                     //vpn未连接则开始连接
                     connect.launch(null)
                 } else if (vpnState == BaseService.State.Connected) {//vpn连接状态点击则断开
@@ -673,7 +666,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
             R.id.lav_guide_main -> {
                 dismissGuideAnimation()
                 FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_GUIDE_CLICK)
-                Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_GUIDE_CLICK}")
                 //开始连接
                 connect.launch(null)
             }
@@ -765,7 +757,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
                         }.onCompletion {
                             if (ProjectUtil.connecting) {
                                 FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_CONNECT)
-                                Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_CONNECT}")
                                 updateVpnInfo()
                                 Core.startService()
                             }
@@ -868,7 +859,6 @@ class MainActivity : BaseActivity(), ShadowsocksConnection.Callback, View.OnClic
             lavGuide.visibility = View.VISIBLE
             lavGuide.playAnimation()
             FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_GUIDE_SHOW)
-            Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_GUIDE_SHOW}")
         }
     }
 

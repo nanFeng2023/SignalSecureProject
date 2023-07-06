@@ -18,17 +18,11 @@ object FirebaseUtils {
             val remoteConfig = Firebase.remoteConfig
             remoteConfig.fetchAndActivate().addOnCompleteListener {
                 if (it.isSuccessful) {
-                    val serviceVpnData = remoteConfig.getString("sigvn_ser")
-                    SharePreferenceUtil.putString(AdMob.SIGVN_SERVICE, serviceVpnData)
+                    val adData = remoteConfig.getString(ConfigurationUtil.REMOTE_AD_KEY)
+                    SharePreferenceUtil.putString(ConfigurationUtil.REMOTE_AD_KEY, adData)
 
-                    val smartServiceVpnData = remoteConfig.getString("sigvn_smar")
-                    SharePreferenceUtil.putString(AdMob.SIGVN_SMART_SERVICE, smartServiceVpnData)
-
-                    val adData = remoteConfig.getString("sigvn_ad")
-                    SharePreferenceUtil.putString(AdMob.SIGVN_AD, adData)
-
-                    val planStr = remoteConfig.getString(ConfigurationUtil.PLAN_KEY)
-                    SharePreferenceUtil.putString(ConfigurationUtil.PLAN_KEY, planStr)
+                    val planStr = remoteConfig.getString(ConfigurationUtil.REMOTE_PLAN_KEY)
+                    SharePreferenceUtil.putString(ConfigurationUtil.REMOTE_PLAN_KEY, planStr)
                     dataLoadFinished = true
                 }
             }

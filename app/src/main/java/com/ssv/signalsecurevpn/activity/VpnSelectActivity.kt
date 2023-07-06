@@ -15,7 +15,6 @@ import com.ssv.signalsecurevpn.ad.AdMob
 import com.ssv.signalsecurevpn.ad.AdShowStateCallBack
 import com.ssv.signalsecurevpn.util.*
 import com.ssv.signalsecurevpn.widget.AlertDialogUtil
-import timber.log.Timber
 
 /*
 * VPN选择页面
@@ -35,7 +34,6 @@ class VpnSelectActivity : BaseActivity() {
             showAlertDialog(position)
         }
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_VPN_SERVER_SHOW)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_VPN_SERVER_SHOW}")
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

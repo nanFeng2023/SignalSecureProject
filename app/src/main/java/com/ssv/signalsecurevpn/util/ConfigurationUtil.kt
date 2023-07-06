@@ -8,21 +8,23 @@ object ConfigurationUtil {
     //-----------------------
     const val PRIVACY_POLICY_URL = ""
     const val MAIL_ACCOUNT = ""
-    const val SHARE_URL = ""
+    const val GOOGLE_STORE_URL = "https://play.google.com/store/apps/details?id="
+
     const val PLAN_PARAM_KEY1 = "sig_home"
     const val PLAN_PARAM_KEY2 = "sig_yes"
     const val PLAN_PARAM_KEY3 = "sig_tio"
     const val PLAN_PARAM_KEY4 = "a_cloak"
 
+    const val REMOTE_AD_KEY = "sigvn_ad"
+    const val REMOTE_PLAN_KEY = "sig_vava"
+
     const val TBA_SERVER_URL = "https://test-lookup.signalvpn.org/chine/grail"
 
     //该版本不接入cloak
     const val CLOAK_URL = ""
+
     //下发服务器接口地址
     const val REQ_REMOTE_SERVER_URL = "https://test.signalvpn.org/suQdtPH/ZLqHdRWFR/sGWToLTL/"
-
-    //商店地址
-    const val GOOGLE_STORE_URL = "https://play.google.com/store/apps/details?id="
 
     //广告位
     const val AD_SPACE_OPEN = "sigvn_on"
@@ -30,9 +32,9 @@ object ConfigurationUtil {
     const val AD_SPACE_NATIVE_RESULT = "sigvn_nresult"
     const val AD_SPACE_INTER_CONNECTION = "sigvn_click"
     const val AD_SPACE_INTER_BACK = "sigvn_ib"
+
     //-----------------------
 
-    const val PLAN_KEY = "planKey"
     const val INSTALL_REFERRER = "install_referrer"
     const val INSTALL_BEGIN_TIME_SECOND = "install_begin_time_second"
     const val CLICK_TIME_SECOND = "click_time_second"
@@ -61,9 +63,9 @@ object ConfigurationUtil {
     const val DOT_PLAN_B_USER_CLICK_VPN_CONNECT = "sig_buyh"
     const val DOT_SERVER_ADDRESS_REQ_INTER_AD = "sig_adcat"
     const val DOT_SERVER_ADDRESS_REQ_RESULT_AD = "sig_adrualt"
-    const val DOT_REQ_SERVER_DATA="sig_kw_e"
-    const val DOT_GET_SERVER_DATA="sig_give_o"
-    const val DOT_REQ_SERVER_DATA_TOTAL_TIME="sig_time_to"
+    const val DOT_REQ_SERVER_DATA = "sig_kw_e"
+    const val DOT_GET_SERVER_DATA = "sig_give_o"
+    const val DOT_REQ_SERVER_DATA_TOTAL_TIME = "sig_time_to"
 
     const val ANDROID_ID = "id"
     const val GAID = "gaid"

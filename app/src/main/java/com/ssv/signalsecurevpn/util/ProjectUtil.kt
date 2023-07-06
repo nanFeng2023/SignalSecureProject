@@ -154,7 +154,7 @@ object ProjectUtil {
         shareIntent.type = "text/plain"
         shareIntent.putExtra(
             Intent.EXTRA_TEXT,
-            "${ConfigurationUtil.SHARE_URL}${context.packageName}"
+            "${ConfigurationUtil.GOOGLE_STORE_URL}${context.packageName}"
         )
         context.startActivity(Intent.createChooser(shareIntent, "share"))
     }

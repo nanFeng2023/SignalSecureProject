@@ -242,7 +242,7 @@ object NetworkUtil {
     }
 
     fun obtainAdData() {
-        val adData: String? = SharePreferenceUtil.getString(AdMob.SIGVN_AD)
+        val adData: String? = SharePreferenceUtil.getString(ConfigurationUtil.REMOTE_AD_KEY)
         Timber.tag(ConfigurationUtil.LOG_TAG).d("NetworkUtil----obtainAdData()---远端广告数据:$adData")
         adDataResult = if (adData != null && !TextUtils.isEmpty(adData)) {
             parseAdData(adData)
@@ -254,7 +254,7 @@ object NetworkUtil {
     }
 
     fun obtainPlanData() {
-        val planStr = SharePreferenceUtil.getString(ConfigurationUtil.PLAN_KEY)
+        val planStr = SharePreferenceUtil.getString(ConfigurationUtil.REMOTE_PLAN_KEY)
         optionResult = if (!planStr.isNullOrEmpty()) {
             parsePlanData(planStr)
         } else {
@@ -492,7 +492,6 @@ object NetworkUtil {
         }
         Timber.d("requestServerData()---countryCode:$countryCode")
         FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_REQ_SERVER_DATA)
-        Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_REQ_SERVER_DATA}")
         val startReqRemoteTime = System.currentTimeMillis()
         OkGo.get<String>(ConfigurationUtil.REQ_REMOTE_SERVER_URL)
             .headers("SEJ", countryCode)

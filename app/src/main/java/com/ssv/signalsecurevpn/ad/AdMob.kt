@@ -44,9 +44,6 @@ object AdMob : AbstractAd() {
     const val AD_INTER_IB = "inter-ib"
     const val AD_NATIVE_HOME = "native_home"
     const val AD_NATIVE_RESULT = "native_result"
-    const val SIGVN_SERVICE = "sigvn_service"
-    const val SIGVN_SMART_SERVICE = "sigvn_smart_service"
-    const val SIGVN_AD = "sigvn_ad"
 
     private var adWrapHashMap = HashMap<String, AdWrap>()
     var isRefreshNativeAd = false
@@ -159,10 +156,8 @@ object AdMob : AbstractAd() {
         if (MainActivity.vpnState == BaseService.State.Connected) {
             if (AD_INTER_CLICK == adType) {
                 FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_INTER_AD)
-                Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_INTER_AD}")
             } else if (AD_NATIVE_RESULT == adType) {
                 FirebaseUtils.upLoadLogEvent(ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_RESULT_AD)
-                Timber.d("---upLoadLogEvent:${ConfigurationUtil.DOT_SERVER_ADDRESS_REQ_RESULT_AD}")
             }
         }
     }
